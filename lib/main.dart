@@ -7,116 +7,300 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: '便签应用',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const TodoNotesPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+// 便签数据模型
+class TodoNote {
+  String id;
+  String content;
+  DateTime createdAt;
+  bool isCompleted;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  TodoNote({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    this.isCompleted = false,
+  });
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class TodoNotesPage extends StatefulWidget {
+  const TodoNotesPage({super.key});
 
-  void _incrementCounter() {
+  @override
+  State<TodoNotesPage> createState() => _TodoNotesPageState();
+}
+
+class _TodoNotesPageState extends State<TodoNotesPage> {
+  // 模拟数据
+  late List<TodoNote> notes;
+
+  @override
+  void initState() {
+    super.initState();
+    notes = [
+      TodoNote(
+        id: '1',
+        content: '需要完成 Q4 项目的详细提案文档',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      TodoNote(
+        id: '2',
+        content: '周三下午 2 点团队例会',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      TodoNote(
+        id: '3',
+        content: '审查新功能分支的 PR',
+        createdAt: DateTime.now(),
+      ),
+      TodoNote(
+        id: '4',
+        content: '完成状态管理章节的学习',
+        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+        isCompleted: true,
+      ),
+    ];
+  }
+
+  void _addNewNote() {
+    showDialog(
+      context: context,
+      builder: (context) => _AddNoteDialog(
+        onAdd: (content) {
+          setState(() {
+            notes.insert(
+              0,
+              TodoNote(
+                id: DateTime.now().toString(),
+                content: content,
+                createdAt: DateTime.now(),
+              ),
+            );
+          });
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _deleteNote(int index) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      notes.removeAt(index);
     });
+  }
+
+  void _toggleComplete(int index) {
+    setState(() {
+      notes[index].isCompleted = !notes[index].isCompleted;
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      return '今天 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (diff.inDays == 1) {
+      return '昨天';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays} 天前';
+    } else {
+      return '${date.month}月${date.day}日';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('我的便签'),
+        elevation: 0,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: notes.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.note_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '还没有便签',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '点击下方按钮添加新的待办事项',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: notes.length,
+              itemBuilder: (context, index) {
+                final note = notes[index];
+                return _NoteCard(
+                  note: note,
+                  onDelete: () => _deleteNote(index),
+                  onComplete: () => _toggleComplete(index),
+                  formatDate: _formatDate,
+                );
+              },
             ),
-          ],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
+        onPressed: _addNewNote,
+        tooltip: '添加新便签',
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class _NoteCard extends StatelessWidget {
+  final TodoNote note;
+  final VoidCallback onDelete;
+  final VoidCallback onComplete;
+  final String Function(DateTime) formatDate;
+
+  const _NoteCard({
+    required this.note,
+    required this.onDelete,
+    required this.onComplete,
+    required this.formatDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: note.isCompleted
+              ? Colors.grey[100]
+              : Colors.blue[50],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          leading: Checkbox(
+            value: note.isCompleted,
+            onChanged: (_) => onComplete(),
+          ),
+          title: Text(
+            note.content,
+            style: TextStyle(
+              fontSize: 15,
+              decoration: note.isCompleted
+                  ? TextDecoration.lineThrough
+                  : TextDecoration.none,
+              color: note.isCompleted ? Colors.grey[600] : Colors.black87,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              formatDate(note.createdAt),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ),
+          trailing: PopupMenuButton(
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Text('编辑'),
+                onTap: () {
+                  // TODO: 实现编辑功能
+                },
+              ),
+              PopupMenuItem(
+                child: const Text('删除'),
+                onTap: onDelete,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddNoteDialog extends StatefulWidget {
+  final Function(String content) onAdd;
+
+  const _AddNoteDialog({required this.onAdd});
+
+  @override
+  State<_AddNoteDialog> createState() => _AddNoteDialogState();
+}
+
+class _AddNoteDialogState extends State<_AddNoteDialog> {
+  final _contentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('添加新便签'),
+      content: TextField(
+        controller: _contentController,
+        decoration: const InputDecoration(
+          hintText: '输入便签内容',
+          border: OutlineInputBorder(),
+        ),
+        maxLines: 5,
+        minLines: 3,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_contentController.text.isNotEmpty) {
+              widget.onAdd(_contentController.text);
+            }
+          },
+          child: const Text('添加'),
+        ),
+      ],
     );
   }
 }
