@@ -107,6 +107,76 @@ class _TodoNotesPageState extends State<TodoNotesPage> {
     });
   }
 
+  void _showCompletedItemsForDate(DateTime selectedDate) {
+    final selectedDateKey = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final completedItems = notes.where((n) {
+      final noteDate = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
+      return n.isCompleted && noteDate.isAtSameMomentAs(selectedDateKey);
+    }).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${selectedDate.year}年${selectedDate.month}月${selectedDate.day}日'),
+        content: SizedBox(
+          width: 300,
+          child: completedItems.isEmpty
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    Text(
+                      '该日期暂无完成事项',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: completedItems.length,
+                  itemBuilder: (context, index) {
+                    final note = completedItems[index];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green[200]!, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green[600], size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              note.content,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.green[800],
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
@@ -128,6 +198,23 @@ class _TodoNotesPageState extends State<TodoNotesPage> {
       appBar: AppBar(
         title: const Text('我的便签'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () async {
+              final selectedDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (selectedDate != null && mounted) {
+                _showCompletedItemsForDate(selectedDate);
+              }
+            },
+            tooltip: '查看完成日历',
+          ),
+        ],
       ),
       body: notes.isEmpty
           ? Center(
