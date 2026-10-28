@@ -26,12 +26,14 @@ class TodoNote {
   String content;
   DateTime createdAt;
   bool isCompleted;
+  bool isUnlimited; // 是否为无限期待办事项
 
   TodoNote({
     required this.id,
     required this.content,
     required this.createdAt,
     this.isCompleted = false,
+    this.isUnlimited = false,
   });
 }
 
@@ -209,6 +211,44 @@ class _TodoNotesPageState extends State<TodoNotesPage> {
         title: const Text('我的便签'),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => _UnlimitedNotesDialog(
+                  notes: notes.where((n) => n.isUnlimited && !n.isCompleted).toList(),
+                  onAdd: (content) {
+                    setState(() {
+                      notes.insert(
+                        0,
+                        TodoNote(
+                          id: DateTime.now().toString(),
+                          content: content,
+                          createdAt: DateTime.now(),
+                          isUnlimited: true,
+                        ),
+                      );
+                    });
+                  },
+                  onDelete: (index) {
+                    setState(() {
+                      final unlimitedNotes = notes.where((n) => n.isUnlimited && !n.isCompleted).toList();
+                      notes.remove(unlimitedNotes[index]);
+                    });
+                  },
+                  onToggleComplete: (index) {
+                    setState(() {
+                      final unlimitedNotes = notes.where((n) => n.isUnlimited && !n.isCompleted).toList();
+                      final note = unlimitedNotes[index];
+                      note.isCompleted = !note.isCompleted;
+                    });
+                  },
+                ),
+              );
+            },
+            tooltip: '无限期待办',
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () async {
@@ -468,6 +508,181 @@ class _AddNoteDialogState extends State<_AddNoteDialog> {
           child: const Text('添加'),
         ),
       ],
+    );
+  }
+}
+
+class _UnlimitedNotesDialog extends StatefulWidget {
+  final List<TodoNote> notes;
+  final Function(String content) onAdd;
+  final Function(int index) onDelete;
+  final Function(int index) onToggleComplete;
+
+  const _UnlimitedNotesDialog({
+    required this.notes,
+    required this.onAdd,
+    required this.onDelete,
+    required this.onToggleComplete,
+  });
+
+  @override
+  State<_UnlimitedNotesDialog> createState() => _UnlimitedNotesDialogState();
+}
+
+class _UnlimitedNotesDialogState extends State<_UnlimitedNotesDialog> {
+  final _contentController = TextEditingController();
+  late List<TodoNote> _displayNotes;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayNotes = List.from(widget.notes);
+  }
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 标题
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '无限期待办事项',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: Colors.grey[300]),
+          // 输入框和添加按钮
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _contentController,
+                    decoration: InputDecoration(
+                      hintText: '添加新的无限期待办事项',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (_contentController.text.isNotEmpty) {
+                      widget.onAdd(_contentController.text);
+                      setState(() {
+                        _displayNotes = List.from(widget.notes);
+                      });
+                      _contentController.clear();
+                    }
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('添加'),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: Colors.grey[300]),
+          // 事项列表
+          Expanded(
+            child: _displayNotes.isEmpty
+                ? Center(
+                    child: Text(
+                      '暂无无限期待办事项',
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _displayNotes.length,
+                    itemBuilder: (context, index) {
+                      final note = _displayNotes[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange[200]!, width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: note.isCompleted,
+                              onChanged: (_) {
+                                widget.onToggleComplete(index);
+                                setState(() {
+                                  _displayNotes = List.from(widget.notes);
+                                });
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                note.content,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.orange[800],
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              iconSize: 20,
+                              onPressed: () {
+                                widget.onDelete(index);
+                                setState(() {
+                                  _displayNotes = List.from(widget.notes);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('关闭'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
