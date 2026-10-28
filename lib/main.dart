@@ -192,6 +192,16 @@ class _TodoNotesPageState extends State<TodoNotesPage> {
     }
   }
 
+  List<TodoNote> _getTodayCompletedNotes() {
+    final today = DateTime.now();
+    return notes.where((n) {
+      final isSameDay = n.createdAt.year == today.year &&
+          n.createdAt.month == today.month &&
+          n.createdAt.day == today.day;
+      return n.isCompleted && isSameDay;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,48 +226,118 @@ class _TodoNotesPageState extends State<TodoNotesPage> {
           ),
         ],
       ),
-      body: notes.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.note_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
+      body: Column(
+        children: [
+          // 未完成事项
+          Expanded(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Text(
+                    '待办事项',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '还没有便签',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '点击下方按钮添加新的待办事项',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: notes.length,
-              itemBuilder: (context, index) {
-                final note = notes[index];
-                return _NoteCard(
-                  note: note,
-                  onDelete: () => _deleteNote(index),
-                  onComplete: () => _toggleComplete(index),
-                  formatDate: _formatDate,
-                );
-              },
+                ),
+                Expanded(
+                  child: notes.where((n) => !n.isCompleted).isEmpty
+                      ? Center(
+                          child: Text(
+                            '没有待办事项',
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: notes.where((n) => !n.isCompleted).length,
+                          itemBuilder: (context, index) {
+                            final filteredNotes = notes.where((n) => !n.isCompleted).toList();
+                            final note = filteredNotes[index];
+                            final originalIndex = notes.indexOf(note);
+                            return _NoteCard(
+                              note: note,
+                              onDelete: () => _deleteNote(originalIndex),
+                              onComplete: () => _toggleComplete(originalIndex),
+                              formatDate: _formatDate,
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
+          ),
+          Divider(height: 1, color: Colors.grey[300]),
+          // 今天已完成事项
+          Expanded(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Text(
+                    '今天完成',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Expanded(
+                  child: _getTodayCompletedNotes().isEmpty
+                      ? Center(
+                          child: Text(
+                            '还没有完成任何事项',
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: _getTodayCompletedNotes().length,
+                          itemBuilder: (context, index) {
+                            final note = _getTodayCompletedNotes()[index];
+                            final originalIndex = notes.indexOf(note);
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.green[200]!, width: 1),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.green[600], size: 20),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      note.content,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.green[800],
+                                        decoration: TextDecoration.lineThrough,
+                                      ),
+                                    ),
+                                  ),
+                                  PopupMenuButton(
+                                    itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        child: const Text('删除'),
+                                        onTap: () => _deleteNote(originalIndex),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewNote,
         tooltip: '添加新便签',
