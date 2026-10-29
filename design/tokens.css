@@ -1,0 +1,71 @@
+/* 温暖手作 · 设计变量
+   纸感底色、圆润、手绘感。所有屏都从这份文件取颜色、字号、间距、圆角、阴影。 */
+:root {
+  /* ---- 颜色（按角色，全部偏暖，不用纯灰） ---- */
+  --color-bg: #F6EFE6;            /* 纸张底色 */
+  --color-surface: #FFF9F2;       /* 卡片、标签栏、弹层 */
+  --color-surface-2: #F1E6D8;     /* 次一级表面：轨道、分组底 */
+  --color-text: #2B1D14;          /* 正文（墨色） */
+  --color-muted: #6E5A4B;         /* 次要文字（≈5.7:1，别再浅） */
+  --color-line: #E7D9C8;          /* 分隔线、描边 */
+  --color-primary: #A9542A;       /* 主色：关键操作、选中态 */
+  --color-primary-ink: #FFFFFF;   /* 主色上的字 */
+  --color-primary-soft: #F2E1D4;  /* 主色浅底：标签、底纹 */
+  --color-primary-deep: #6F3218;  /* 浅底上的小字（≈7.6:1） */
+  --color-accent: #5E7A4A;        /* 点缀：只做图形、大字 */
+  --color-accent-soft: #E5EBDC;   /* 点缀浅底 */
+  --color-link: #52703F;          /* 链接、小字强调（≈4.6:1） */
+  --color-sand: #E9CFA9;          /* 插画色块（沙色） */
+  --color-sand-deep: #D8B27B;     /* 沙色的实心块（图表条） */
+  --color-sand-soft: #F0E2CE;     /* 插画浅色块 / 学习标签底 */
+  --color-danger: #8C3B24;        /* 删除、危险 */
+
+  /* ---- 字体 ---- */
+  --font-serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-sans: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+
+  /* ---- 字号阶梯（1.25） ---- */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 40px;
+
+  /* ---- 间距（4 / 8 的倍数） ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ---- 圆角 ---- */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 999px;
+
+  /* ---- 阴影（暖色，低透明度、大模糊） ---- */
+  --shadow-sm: 0 2px 8px rgba(120, 72, 30, 0.08);
+  --shadow-md: 0 8px 24px rgba(120, 72, 30, 0.12);
+  --shadow-lift: 0 10px 28px rgba(120, 72, 30, 0.16);
+
+  /* ---- 版式尺寸 ---- */
+  --page-x: 20px;          /* 左右边距 */
+  --status-bar-h: 54px;    /* 状态栏 + 灵动岛 */
+  --tabbar-h: 83px;        /* 标签栏（含 34px 横条区） */
+  --safe-b: 34px;          /* 底部横条区 */
+  --tap: 44px;             /* 最小点击区 */
+
+  /* ---- 动效 ---- */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --dur: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 0ms; }
+}

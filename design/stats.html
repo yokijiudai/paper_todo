@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="dsh-design" content="app">
+<title>本周回顾</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>
+  .display { margin-top: var(--space-3); }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: var(--space-5);
+    padding: var(--space-4) var(--space-2);
+  }
+  .stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .stat + .stat { border-left: 1px solid var(--color-line); }
+  .stat-value {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: var(--text-xl);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-value small { font-size: var(--text-xs); font-family: var(--font-sans); font-weight: 400; color: var(--color-muted); margin-left: 2px; }
+  .stat-label { font-size: var(--text-xs); color: var(--color-muted); letter-spacing: 0.02em; }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .card-note { font-size: var(--text-xs); color: var(--color-muted); }
+
+  /* 换一周：视觉上紧凑，点按区仍是 44 */
+  .page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .week-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: var(--tap);
+    margin: -6px 0;
+    padding: 0 10px 0 12px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-full);
+    background: var(--color-surface-2);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    transition: background var(--dur) var(--ease);
+  }
+  .week-btn:active { background: var(--color-sand-soft); }
+  .week-btn svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--color-muted); }
+
+  /* ---------- 从底部弹出的周列表 ---------- */
+  .sheet-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: flex-end;
+  }
+  .sheet-mask[hidden] { display: none; }
+  .sheet-scrim {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    padding: 0;
+    background: rgba(43, 29, 20, 0.34);
+    animation: fade-in var(--dur) var(--ease);
+  }
+  .sheet {
+    position: relative;
+    width: 100%;
+    padding: 10px var(--page-x) calc(var(--space-4) + var(--safe-b));
+    background: var(--color-surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -12px 36px rgba(120, 72, 30, 0.18);
+    animation: sheet-up 240ms var(--ease);
+  }
+  .sheet-grip {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto var(--space-4);
+    border-radius: var(--radius-full);
+    background: var(--color-line);
+  }
+  /* ---------- 周历头部 ---------- */
+  .cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .cal-step {
+    width: var(--tap);
+    height: var(--tap);
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-full);
+    color: var(--color-text);
+    transition: background var(--dur) var(--ease);
+  }
+  .cal-step:active { background: var(--color-surface-2); }
+  .cal-step svg { width: 20px; height: 20px; }
+  .cal-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: var(--tap);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-full);
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+    transition: background var(--dur) var(--ease);
+  }
+  .cal-title:active { background: var(--color-surface-2); }
+  .cal-title svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--color-muted); }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  .cal-weekdays span {
+    text-align: center;
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+  }
+
+  .cal-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: center;
+    width: 100%;
+    min-height: var(--tap);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    transition: background var(--dur) var(--ease);
+  }
+  .cal-week + .cal-week { margin-top: 2px; }
+  .cal-week:active { background: var(--color-surface-2); }
+  .cal-week span { padding: 10px 0; text-align: center; }
+  .cal-week .is-out { color: var(--color-muted); }
+  .cal-week.is-on {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-deep);
+    font-weight: 600;
+  }
+  .cal-week.is-on .is-out { color: var(--color-primary-deep); }
+
+  .cal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+  .cal-foot-text {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+  }
+  .cal-foot-text b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+
+  /* ---------- 年 / 月选择 ---------- */
+  .pick-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .pick-year {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+  }
+  .pick-months {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
+  }
+  .pick-month {
+    min-height: var(--tap);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    transition: background var(--dur) var(--ease);
+  }
+  .pick-month:active { background: var(--color-surface-2); }
+  .pick-month.is-on {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-ink);
+    font-weight: 600;
+  }
+
+  @keyframes sheet-up { from { transform: translateY(20px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet, .sheet-scrim { animation: none; }
+  }
+  .chart { width: 100%; height: auto; }
+
+  /* 柱状条可以点，选一天 */
+  .chart { cursor: pointer; }
+  .chart .col-hit { fill: transparent; }
+  .chart .col text { font-size: 12px; }
+  .chart .col-bar { fill: var(--color-sand); transition: fill var(--dur) var(--ease); }
+  .chart .col.is-on .col-bar { fill: var(--color-accent); }
+  .chart .col-count { fill: var(--color-muted); }
+  .chart .col.is-on .col-count { fill: var(--color-text); font-weight: 600; }
+  .chart .col-day { fill: var(--color-muted); }
+  .chart .col.is-on .col-day { fill: var(--color-primary-deep); font-weight: 600; }
+  .chart .col:focus { outline: none; }
+  .chart .col:focus-visible .col-bar { stroke: var(--color-text); stroke-width: 1.4; }
+
+  .chart-hint {
+    margin-top: 2px;
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+  }
+  .day-label {
+    font-family: var(--font-serif);
+    font-size: var(--text-md);
+    letter-spacing: 0.01em;
+  }
+  .day-list { margin-top: var(--space-2); }
+  .day-item {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: 11px 0;
+  }
+  .day-item + .day-item { border-top: 1px solid var(--color-line); }
+  .day-check {
+    width: 16px;
+    height: 16px;
+    align-self: start;
+    margin-top: 1px;
+    color: var(--color-accent);
+  }
+  .day-check svg { display: block; width: 16px; height: 16px; }
+  .day-title {
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--color-text);
+    overflow-wrap: anywhere;
+  }
+  .day-time {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .day-empty { padding: var(--space-3) 0 var(--space-1); font-size: var(--text-sm); color: var(--color-muted); }
+</style>
+</head>
+<body>
+
+<header class="status-bar">
+  <span class="status-time">9:41</span>
+  <span class="status-icons" aria-hidden="true">
+    <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7.6" width="3" height="4.4" rx="1"/><rect x="5" y="5.2" width="3" height="6.8" rx="1"/><rect x="10" y="2.6" width="3" height="9.4" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.4 3.9a10 10 0 0 1 13.2 0"/><path d="M4.1 6.9a6 6 0 0 1 7.8 0"/><circle cx="8" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>
+    <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.7" y="0.7" width="21" height="11.6" rx="3.4" stroke="currentColor" stroke-width="1.4" opacity=".45"/><rect x="2.4" y="2.4" width="16" height="8.2" rx="2" fill="currentColor"/><path d="M23.6 4.5v4c1-.3 1.6-1 1.6-2s-.6-1.7-1.6-2Z" fill="currentColor" opacity=".45"/></svg>
+  </span>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <p class="kicker">十月 · 第四周</p>
+    <button class="week-btn" id="weekBtn" type="button" aria-label="选择其他周，当前是 10 月 23 日到 10 月 29 日" aria-haspopup="dialog" aria-controls="weekSheet">
+      换一周
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5L12 15l5.5-5.5"/></svg>
+    </button>
+  </div>
+  <h1 class="display">这周完成了 14 件</h1>
+
+  <section class="card summary" aria-label="本周概览">
+    <div class="stat">
+      <span class="stat-value">14<small>件</small></span>
+      <span class="stat-label">完成</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">9<small>天</small></span>
+      <span class="stat-label">连续记录</span>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top: var(--space-4);">
+    <div class="card-head">
+      <h2 class="section-label">每天完成的件数</h2>
+      <span class="card-note">10.23 – 10.29</span>
+    </div>
+    <svg class="chart" viewBox="0 0 310 132" tabindex="0" role="slider" aria-label="每天完成的件数，左右方向键切换" aria-valuemin="0" aria-valuemax="6" aria-valuenow="2" aria-valuetext="10 月 25 日，完成 4 件">
+      <path d="M4 108c52 1.4 100 -1.2 150 0s100 1.2 152 0" stroke="var(--color-text)" stroke-opacity=".18" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <g class="col" data-day="0">
+        <rect class="col-hit" x="1" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="12" y="42" width="20" height="66" rx="6"/>
+        <text class="col-count" x="22" y="30" text-anchor="middle">3</text>
+        <text class="col-day" x="22" y="126" text-anchor="middle">一</text>
+      </g>
+      <g class="col" data-day="1">
+        <rect class="col-hit" x="43" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="54" y="86" width="20" height="22" rx="6"/>
+        <text class="col-count" x="64" y="74" text-anchor="middle">1</text>
+        <text class="col-day" x="64" y="126" text-anchor="middle">二</text>
+      </g>
+      <g class="col is-on" data-day="2">
+        <rect class="col-hit" x="85" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="96" y="20" width="20" height="88" rx="6"/>
+        <text class="col-count" x="106" y="12" text-anchor="middle">4</text>
+        <text class="col-day" x="106" y="126" text-anchor="middle">三</text>
+      </g>
+      <g class="col" data-day="3">
+        <rect class="col-hit" x="127" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="138" y="64" width="20" height="44" rx="6"/>
+        <text class="col-count" x="148" y="52" text-anchor="middle">2</text>
+        <text class="col-day" x="148" y="126" text-anchor="middle">四</text>
+      </g>
+      <g class="col" data-day="4">
+        <rect class="col-hit" x="169" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="180" y="64" width="20" height="44" rx="6"/>
+        <text class="col-count" x="190" y="52" text-anchor="middle">2</text>
+        <text class="col-day" x="190" y="126" text-anchor="middle">五</text>
+      </g>
+      <g class="col" data-day="5">
+        <rect class="col-hit" x="211" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="222" y="86" width="20" height="22" rx="6"/>
+        <text class="col-count" x="232" y="74" text-anchor="middle">1</text>
+        <text class="col-day" x="232" y="126" text-anchor="middle">六</text>
+      </g>
+      <g class="col" data-day="6">
+        <rect class="col-hit" x="253" y="0" width="42" height="132"/>
+        <rect class="col-bar" x="264" y="86" width="20" height="22" rx="6"/>
+        <text class="col-count" x="274" y="74" text-anchor="middle">1</text>
+        <text class="col-day" x="274" y="126" text-anchor="middle">日</text>
+      </g>
+    </svg>
+    <p class="chart-hint">点一根柱，看那天做了什么</p>
+  </section>
+
+  <section class="card" style="margin-top: var(--space-4);">
+    <div class="card-head">
+      <h2 class="section-label day-label" id="dayTitle">10 月 25 日</h2>
+      <span class="card-note" id="dayCount">4 件</span>
+    </div>
+    <ul class="day-list" id="dayList" aria-live="polite" aria-label="这一天完成的事"></ul>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="主导航">
+  <a class="tab" href="home.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 6.6h11M9.2 12h11M9.2 17.4h7"/><path d="M3.7 6.3l1.5 1.6 2.1-2.5M3.7 11.7l1.5 1.6 2.1-2.5"/><circle cx="5" cy="17.3" r="1.5"/></svg>
+    今天
+  </a>
+  <a class="tab tab-add" href="add.html">
+    <span class="add-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5.6v12.8M5.6 12h12.8"/></svg></span>
+    新建
+  </a>
+  <a class="tab is-active" href="stats.html" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 20.2h16.8"/><path d="M7.2 20V13M12 20V8.4M16.8 20v-4.6"/></svg>
+    回顾
+  </a>
+</nav>
+
+<div class="sheet-mask" id="weekSheet" hidden>
+  <button class="sheet-scrim" type="button" data-close aria-label="关闭"></button>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="calTitle">
+    <span class="sheet-grip" aria-hidden="true"></span>
+
+    <div id="calView">
+      <div class="cal-head">
+        <button class="cal-step" type="button" id="calPrev" aria-label="上一个月">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.2L7.8 12l6.7 6.8"/></svg>
+        </button>
+        <button class="cal-title" type="button" id="calTitle" aria-haspopup="true" aria-controls="pickView">
+          <span id="calTitleText">2026 年 10 月</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5L12 15l5.5-5.5"/></svg>
+        </button>
+        <button class="cal-step" type="button" id="calNext" aria-label="下一个月">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5.2l6.7 6.8-6.7 6.8"/></svg>
+        </button>
+      </div>
+
+      <div class="cal-weekdays" aria-hidden="true">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+      </div>
+
+      <div id="calGrid" role="group" aria-label="按周选择"></div>
+
+      <div class="cal-foot">
+        <p class="cal-foot-text" id="calFoot">点一行，选那一周</p>
+        <button class="btn btn-primary" type="button" data-close>完成</button>
+      </div>
+    </div>
+
+    <div id="pickView" hidden>
+      <div class="pick-head">
+        <button class="cal-step" type="button" id="yearPrev" aria-label="上一年">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.2L7.8 12l6.7 6.8"/></svg>
+        </button>
+        <span class="pick-year" id="pickYear">2026 年</span>
+        <button class="cal-step" type="button" id="yearNext" aria-label="下一年">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5.2l6.7 6.8-6.7 6.8"/></svg>
+        </button>
+      </div>
+      <div class="pick-months" id="pickMonths" role="group" aria-label="选择月份"></div>
+
+      <div class="cal-foot">
+        <p class="cal-foot-text">点月份，回日历选周</p>
+        <button class="btn btn-primary" type="button" data-close>完成</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var sheet = document.getElementById('weekSheet');
+    var btn = document.getElementById('weekBtn');
+    if (!sheet || !btn) return;
+
+    var calView = document.getElementById('calView');
+    var pickView = document.getElementById('pickView');
+    var calGrid = document.getElementById('calGrid');
+    var calFoot = document.getElementById('calFoot');
+    var calTitleText = document.getElementById('calTitleText');
+    var pickYear = document.getElementById('pickYear');
+    var pickMonths = document.getElementById('pickMonths');
+
+    // 一个先验状态：本周 = 2026 年 10 月
+    var state = { year: 2026, month: 10 };
+    var thisWeek = { year: 2026, month: 10, startDay: 23 };
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function daysIn(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+    function firstIndex(y, m) {
+      // 原型里把 2026 年 10 月的 1 号排在周日，好让 10.23–10.29 正好占一整行
+      if (y === 2026 && m === 10) return 6;
+      return (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+    }
+    function neighbourMonth(kind) {
+      if (kind === -1) return state.month === 1 ? 12 : state.month - 1;
+      if (kind === 1) return state.month === 12 ? 1 : state.month + 1;
+      return state.month;
+    }
+    function fmt(el) { return el.dataset.m + '.' + pad(Number(el.textContent)); }
+
+    function render() {
+      var wd = firstIndex(state.year, state.month);
+      var n = daysIn(state.year, state.month);
+      var prevN = daysIn(state.year, state.month === 1 ? 12 : state.month - 1);
+      var cells = [];
+      var i;
+      for (i = 0; i < wd; i++) cells.push({ d: prevN - wd + 1 + i, kind: -1 });
+      for (i = 1; i <= n; i++) cells.push({ d: i, kind: 0 });
+      var k = 1;
+      while (cells.length % 7) cells.push({ d: k++, kind: 1 });
+
+      var html = '';
+      for (var r = 0; r < cells.length / 7; r++) {
+        html += '<button class="cal-week" type="button">';
+        for (var c = 0; c < 7; c++) {
+          var cell = cells[r * 7 + c];
+          html += '<span class="' + (cell.kind ? 'is-out' : '') + '" data-m="' + neighbourMonth(cell.kind) + '">' + cell.d + '</span>';
+        }
+        html += '</button>';
+      }
+      calGrid.innerHTML = html;
+
+      calTitleText.textContent = state.year + ' 年 ' + state.month + ' 月';
+      if (pickYear) pickYear.textContent = state.year + ' 年';
+
+      // 本周那一行默认选中
+      var rows = calGrid.children;
+      var rowIndex = -1;
+      if (state.year === thisWeek.year && state.month === thisWeek.month) {
+        rowIndex = Math.floor((wd + thisWeek.startDay - 1) / 7);
+      }
+      if (rowIndex > -1 && rows[rowIndex]) {
+        rows[rowIndex].classList.add('is-on');
+        rows[rowIndex].setAttribute('aria-current', 'true');
+        setFoot('已选 <b>' + fmt(rows[rowIndex].children[0]) + ' – ' + fmt(rows[rowIndex].children[6]) + '</b> · 本周 14 件');
+      } else {
+        setFoot('点一行，选那一周');
+      }
+      markMonth();
+    }
+
+    function setFoot(html) { calFoot.innerHTML = html; }
+
+    function markMonth() {
+      if (!pickMonths) return;
+      Array.prototype.forEach.call(pickMonths.children, function (el) {
+        var on = Number(el.dataset.m) === state.month;
+        el.classList.toggle('is-on', on);
+        if (on) { el.setAttribute('aria-current', 'true'); } else { el.removeAttribute('aria-current'); }
+      });
+    }
+
+    // 12 个月份格
+    if (pickMonths) {
+      for (var m = 1; m <= 12; m++) {
+        var b = document.createElement('button');
+        b.className = 'pick-month';
+        b.type = 'button';
+        b.dataset.m = String(m);
+        b.textContent = m + ' 月';
+        pickMonths.appendChild(b);
+      }
+      pickMonths.addEventListener('click', function (e) {
+        var el = e.target.closest('.pick-month');
+        if (!el) return;
+        state.month = Number(el.dataset.m);
+        showCalendar();
+        render();
+      });
+    }
+
+    function showCalendar() { calView.hidden = false; if (pickView) pickView.hidden = true; }
+    function showPicker() { calView.hidden = true; if (pickView) pickView.hidden = false; markMonth(); }
+
+    // 点标题 → 选年 / 月
+    var titleBtn = document.getElementById('calTitle');
+    if (titleBtn) {
+      titleBtn.addEventListener('click', function () {
+        if (pickView && !pickView.hidden) { showCalendar(); } else { showPicker(); }
+      });
+    }
+    var yearPrev = document.getElementById('yearPrev');
+    var yearNext = document.getElementById('yearNext');
+    if (yearPrev) yearPrev.addEventListener('click', function () { state.year -= 1; render(); markMonth(); });
+    if (yearNext) yearNext.addEventListener('click', function () { state.year += 1; render(); markMonth(); });
+
+    // 上一 / 下一月
+    document.getElementById('calPrev').addEventListener('click', function () {
+      state.month -= 1;
+      if (state.month < 1) { state.month = 12; state.year -= 1; }
+      render();
+    });
+    document.getElementById('calNext').addEventListener('click', function () {
+      state.month += 1;
+      if (state.month > 12) { state.month = 1; state.year += 1; }
+      render();
+    });
+
+    // 点一行选一周
+    calGrid.addEventListener('click', function (e) {
+      var row = e.target.closest('.cal-week');
+      if (!row) return;
+      Array.prototype.forEach.call(calGrid.children, function (el) {
+        el.classList.remove('is-on');
+        el.removeAttribute('aria-current');
+      });
+      row.classList.add('is-on');
+      row.setAttribute('aria-current', 'true');
+      setFoot('已选 <b>' + fmt(row.children[0]) + ' – ' + fmt(row.children[6]) + '</b>');
+    });
+
+    function open() {
+      sheet.hidden = false;
+      document.body.style.overflow = 'hidden';
+      btn.setAttribute('aria-expanded', 'true');
+      showCalendar();
+      render();
+    }
+    function close() {
+      sheet.hidden = true;
+      document.body.style.overflow = '';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.focus();
+    }
+    btn.addEventListener('click', open);
+    sheet.addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !sheet.hidden) close();
+    });
+
+    render();
+  })();
+</script>
+
+<script>
+  (function () {
+    var chart = document.querySelector('.chart');
+    var list = document.getElementById('dayList');
+    var dayTitle = document.getElementById('dayTitle');
+    var dayCount = document.getElementById('dayCount');
+    if (!chart || !list) return;
+
+    var CHECK = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="currentColor"/><path d="M7.9 12.3l2.8 2.9 5.6-6.3" stroke="var(--color-surface)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    // 这一周每天完成的事（和柱状条的 3 / 1 / 4 / 2 / 2 / 1 / 1 对应）
+    var days = [
+      { date: '10 月 23 日', items: [
+        ['整理上周会议纪要', '09:20'],
+        ['给团队发本周排期', '11:05'],
+        ['傍晚遛狗 20 分钟', '18:40']
+      ] },
+      { date: '10 月 24 日', items: [
+        ['回复设计评审的三条意见', '15:10']
+      ] },
+      { date: '10 月 25 日', items: [
+        ['写完 Q4 提案的大纲', '09:50'],
+        ['和高岚对齐接口字段', '14:20'],
+        ['把阳台的土换了', '17:30'],
+        ['读完《写作这回事》第 3 章', '21:40']
+      ] },
+      { date: '10 月 26 日', items: [
+        ['修掉登录页的错位', '10:15'],
+        ['交水电费', '20:05']
+      ] },
+      { date: '10 月 27 日', items: [
+        ['准备周会要讲的三页', '11:30'],
+        ['跑步 5 公里', '19:10']
+      ] },
+      { date: '10 月 28 日', items: [
+        ['把简历更新到最新', '16:00']
+      ] },
+      { date: '10 月 29 日', items: [
+        ['讲完周会那三页', '10:00']
+      ] }
+    ];
+
+    var cols = Array.prototype.slice.call(chart.querySelectorAll('.col'));
+
+    function esc(s) {
+      return s.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
+    }
+
+    function show(i) {
+      var d = days[i];
+      if (!d) return;
+      dayTitle.textContent = d.date;
+      dayCount.textContent = d.items.length + ' 件';
+      if (!d.items.length) {
+        list.innerHTML = '<li class="day-empty">这天没有完成记录</li>';
+      } else {
+        list.innerHTML = d.items.map(function (it) {
+          return '<li class="day-item">' +
+            '<span class="day-check">' + CHECK + '</span>' +
+            '<span class="day-title">' + esc(it[0]) + '</span>' +
+            '<span class="day-time">' + it[1] + '</span>' +
+          '</li>';
+        }).join('');
+      }
+      cols.forEach(function (c, j) {
+        c.classList.toggle('is-on', j === i);
+      });
+      chart.setAttribute('aria-valuenow', String(i));
+      chart.setAttribute('aria-valuetext', d.date + '，完成 ' + d.items.length + ' 件');
+    }
+
+    // 整条柱和它两边的空隙都算一天的点击区，按位置取最近的一列
+    chart.addEventListener('click', function (e) {
+      var r = chart.getBoundingClientRect();
+      if (!r.width) return;
+      var i = Math.floor(((e.clientX - r.left) / r.width) * 310 / 42);
+      show(Math.max(0, Math.min(days.length - 1, i)));
+    });
+
+    // 键盘：左右方向键切换那一天
+    chart.addEventListener('keydown', function (e) {
+      var n = Number(chart.getAttribute('aria-valuenow'));
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        n += e.key === 'ArrowRight' ? 1 : -1;
+        show(Math.max(0, Math.min(days.length - 1, n)));
+      } else if (e.key === 'Home') {
+        e.preventDefault(); show(0);
+      } else if (e.key === 'End') {
+        e.preventDefault(); show(days.length - 1);
+      }
+    });
+
+    // 默认停在件数最多的一天
+    show(2);
+  })();
+</script>
+
+</body>
+</html>
