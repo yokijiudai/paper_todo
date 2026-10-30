@@ -4,6 +4,10 @@
 
 界面照 `design/` 下四张高保真原型落地，纯 Flutter，没有后端、没有账号，数据只存在手机上。
 
+<p align="center">
+  <img src="docs/branding/app-icon.png" width="96" alt="应用图标">
+</p>
+
 <p>
   <img src="docs/screenshots/home.jpg" width="240" alt="首页">
   <img src="docs/screenshots/stats.jpg" width="240" alt="回顾页">
@@ -111,6 +115,7 @@ lib/
 
 - **字体**：完整字体放 `build/fontsrc/`（不进仓库），`python tool/subset_font.py` 按 `lib/` 里出现的字裁子集到 `assets/fonts/`。**改了标题文案要重跑**，否则新字会回落到系统衬线。
 - **纸纹**：`python tool/gen_paper_texture.py` 生成 256×256 可平铺噪声，整屏 7% 叠加。
+- **图标与启动页**：`python tool/gen_app_icon.py` 画出「纸色底 + 斜纸条 + 胶带 + 对勾」，同时产出传统 mipmap（48–192）、Android 8 自适应图标的前景位图与背景色、启动页居中 logo。改配色只要改脚本顶部的 `BG` / `PAPER` / `INK` / `TAPE`。
 - **README 截图**：`python tool/make_readme_shots.py` 把 `build/preview/` 的真机截图压成 `docs/screenshots/*.jpg`。
 
 ## 构建

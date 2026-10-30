@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- 启动页：纸色底 + 居中的纸条 logo，和首屏纸色衔接，避免白屏闪一下。
+     图片由 tool/gen_app_icon.py 生成（drawable-*dpi/launch_logo.png）。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
+    <item android:drawable="@color/ic_launcher_bg" />
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:filter="true"
+            android:src="@drawable/launch_logo" />
+    </item>
 </layer-list>
