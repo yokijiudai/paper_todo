@@ -87,6 +87,26 @@ lib/
 
 `completedAt` 为 `null` 即未完成，`isCompleted` 是派生 getter；未知 `category` 回落 `work`；旧版本写过 `timeLabel` 的条目仍能读进来（`estimate ?? timeLabel`），不会被静默改写。
 
+## 验收
+
+`PROJECT_STRUCTURE.md` §13 的八项清单在模拟器与测试里逐项验过。这里留两组「光看代码看不出来」的证据。
+
+**冷启动**：清数据 → 勾掉一条 → 新建一条 → `adb shell am force-stop` → 重开。截图里「团队例会」已经落到「今天已完成」，新条目在未完成里，计数「已完成 3 件 · 还有 3 件」——说明落盘与首启种子都对得上。（新条目是 adb 敲的 ASCII 文本，adb 打不了中文。）
+
+<p>
+  <img src="docs/screenshots/acceptance-cold-start.jpg" width="240" alt="杀进程重开后数据与完成状态仍在">
+</p>
+
+**系统字号 1.3 倍**：把模拟器 `font_scale` 调到 1.3 后逐页看——首页标题折成两行、卡片变高但不出框；回顾页的卡片标题和日期范围不打架；表单在键盘弹起时保存栏仍贴着键盘。
+
+<p>
+  <img src="docs/screenshots/acceptance-scale-home.jpg" width="200" alt="字号 1.3 倍的首页">
+  <img src="docs/screenshots/acceptance-scale-stats.jpg" width="200" alt="字号 1.3 倍的回顾页">
+  <img src="docs/screenshots/acceptance-scale-form.jpg" width="200" alt="字号 1.3 倍的表单页">
+</p>
+
+其余六项（390×844 无溢出、可点区 ≥44、勾选后两页同步、跨月周切换、三处空态、`analyze` + `test`）由 55 例测试和真机点按覆盖，不单独截图。
+
 ## 资产
 
 - **字体**：完整字体放 `build/fontsrc/`（不进仓库），`python tool/subset_font.py` 按 `lib/` 里出现的字裁子集到 `assets/fonts/`。**改了标题文案要重跑**，否则新字会回落到系统衬线。
