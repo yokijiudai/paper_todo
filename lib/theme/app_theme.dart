@@ -44,11 +44,7 @@ abstract final class AppTheme {
         letterSpacing: -0.5,
       ),
       headlineSmall: _serif(size: AppText.xl, height: 1.35),
-      titleLarge: _sans(
-        size: AppText.lg,
-        weight: FontWeight.w600,
-        height: 1.4,
-      ),
+      titleLarge: _sans(size: AppText.lg, weight: FontWeight.w600, height: 1.4),
       titleMedium: _sans(
         size: AppText.md,
         weight: FontWeight.w600,
@@ -103,10 +99,7 @@ abstract final class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.text,
-        contentTextStyle: _sans(
-          size: AppText.sm,
-          color: AppColors.primaryInk,
-        ),
+        contentTextStyle: _sans(size: AppText.sm, color: AppColors.primaryInk),
         actionTextColor: AppColors.sand,
         behavior: SnackBarBehavior.floating,
         insetPadding: const EdgeInsets.fromLTRB(

@@ -40,7 +40,7 @@ node/
 │  ├─ models/
 │  │  └─ todo_note.dart            TodoNote + TodoCategory + toJson/fromJson
 │  ├─ data/
-│  │  ├─ todo_store.dart           TodoStore 接口 + 本地文件实现 + 内存实现
+│  │  ├─ todo_store.dart           TodoStore 接口 + SharedPreferences 实现 + 内存实现
 │  │  └─ seed_data.dart            首次启动的示例数据
 │  ├─ state/
 │  │  └─ todo_controller.dart      TodoController + TodoScope（InheritedNotifier）
@@ -200,23 +200,25 @@ abstract interface class TodoStore {
   Future<void> save(List<TodoNote> notes);
 }
 
-/// 持久化到手机本地目录：{appDocDir}/todo_notes.json
-class FileTodoStore implements TodoStore {
-  static const _fileName = 'todo_notes.json';
-  final Directory _dir;   // 由 path_provider 的 getApplicationDocumentsDirectory() 传入
+/// 存进 SharedPreferences：一个 key 放整段 JSON
+class SharedPrefsTodoStore implements TodoStore {
+  static const _key = 'todo.notes.v1';
 
-  File get _file => File('${_dir.path}/$_fileName');
+  SharedPrefsTodoStore([SharedPreferencesAsync? prefs])
+      : _prefs = prefs ?? SharedPreferencesAsync();
+
+  final SharedPreferencesAsync _prefs;
 
   @override
   Future<List<TodoNote>> load() async {
-    if (!await _file.exists()) return [];
     try {
-      final raw = await _file.readAsString();
+      final raw = await _prefs.getString(_key);
+      if (raw == null || raw.isEmpty) return [];
       final map = jsonDecode(raw) as Map<String, Object?>;
       final list = (map['notes'] as List?)?.cast<Map<String, Object?>>() ?? [];
       return list.map(TodoNote.fromJson).toList();
     } catch (e) {
-      debugPrint('FileTodoStore.load failed: $e');
+      debugPrint('SharedPrefsTodoStore.load failed: $e');
       return [];
     }
   }
@@ -227,18 +229,18 @@ class FileTodoStore implements TodoStore {
       'version': 1,
       'notes': notes.map((n) => n.toJson()).toList(),
     };
-    await _file.writeAsString(jsonEncode(payload));
+    await _prefs.setString(_key, jsonEncode(payload));
   }
 }
 
 class MemoryTodoStore implements TodoStore { /* 测试 / 预览用 */ }
 ```
 
-- 数据以 JSON 文件形式写入 `{应用文档目录}/todo_notes.json`，杀进程、重启后数据仍在。
-- `path_provider` 已在本地 pub 缓存中，离线可用；无需网络即可 `flutter pub get`。
-- `load()` 文件不存在或解析失败均返回 `[]` 并 `debugPrint`，不抛到 UI。
-- `save()` 先写临时文件再 rename（原子写入），避免写到一半崩溃导致数据损坏。
-- `version` 字段预留给以后迁移；读到未知字段忽略，缺字段用默认值。
+- 整份列表序列化成一段 JSON 字符串，存进 `todo.notes.v1`；杀进程、重启后数据仍在。
+- 用 2.5 的 `SharedPreferencesAsync`：读写直接落到平台侧、不带进程内缓存，比旧的 `SharedPreferences` + `getInstance()` 少一层缓存不一致的坑。
+- key 带版本：结构变了就读 `todo.notes.v2`，v1 留作迁移来源；`version` 字段同时兜底。
+- `load()` 解析失败返回 `[]` 并 `debugPrint`，不把异常抛给 UI（坏数据最多丢一次，不能白屏）。
+- 单条写入量是 KB 级，SharedPreferences 足够；真到成千上万条再换 sqflite / Isar，只改这一个实现。
 - **接口的意义**：以后要换 sqflite / 云同步，只新增一个实现，`main.dart` 换一行。
 
 ### 4.5 `state/todo_controller.dart`
@@ -388,9 +390,8 @@ ListView
 ```dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final dir = await getApplicationDocumentsDirectory();   // path_provider
-  final controller = TodoController(FileTodoStore(dir));
-  await controller.load();               // 读本地 JSON 文件，冷启动可接受
+  final controller = TodoController(SharedPrefsTodoStore());
+  await controller.load();               // 读 SharedPreferences，冷启动可接受
   runApp(TodoApp(controller: controller));
 }
 
@@ -432,7 +433,7 @@ class TodoApp extends StatelessWidget {
 - `category`：枚举名（`work/life/study/idea`），读到未知值回落 `work`（不丢数据）。
 - `timeLabel`：可空；存用户填的原文，不做时间解析。
 - `completedAt`：ISO8601 本地时间，含微秒；`null` 即未完成。
-- 整个 key 或文件带 `version`，为以后「按天分组 / 加标签」留迁移入口。
+- 整个 payload 带 `version`（key 名也带版本），为以后「按天分组 / 加标签」留迁移入口。
 
 ---
 
@@ -441,8 +442,8 @@ class TodoApp extends StatelessWidget {
 ```
 用户点勾 ──► TodoController.toggle(id)
                  │ 改内存 → notifyListeners() → UI 重建
-                 └─ 250ms 防抖 ──► FileTodoStore.save(all) ──► {appDocDir}/todo_notes.json
-冷启动 ──► main() await load() ──► FileTodoStore.load() ──► 读本地文件 ──► 列表 ──► runApp
+                 └─ 250ms 防抖 ──► SharedPrefsTodoStore.save(all) ──► SharedPreferences 写 'todo.notes.v1'
+冷启动 ──► main() await load() ──► SharedPrefsTodoStore.load() ──► 读同一个 key ──► 列表 ──► runApp
 ```
 
 - UI 从不直接改 `TodoNote` 字段（模型不可变），一切走 controller。
@@ -526,7 +527,7 @@ class TodoApp extends StatelessWidget {
 dependencies:
   flutter: {sdk: flutter}
   cupertino_icons: ^1.0.8
-  path_provider: ^2.1.6       # 已在本地 pub 缓存中，离线可用
+  shared_preferences: ^2.5.6  # 已装（pub 镜像可达）
 
 flutter:
   uses-material-design: true
@@ -540,7 +541,9 @@ flutter:
 ```
 
 - 若走 SVG 插画再加 `flutter_svg: ^2.2.0` 与 `assets/art/`。
-- **不再需要 `shared_preferences`**：数据直接以 JSON 文件写入 `{应用文档目录}/todo_notes.json`，通过 `path_provider` 获取路径 + `dart:io` 读写文件。`path_provider` 已在本地 pub 缓存中，`flutter pub get --offline` 即可成功。
+- **持久化用 `shared_preferences: ^2.5.6`**：整份待办序列化成一段 JSON，存在 key `todo.notes.v1`。Android 侧包 `shared_preferences_android 2.5.4` 要求 `minSdk 24`，本工程 Flutter 默认就是 24，无需改 Gradle；该包自带 Android 原生实现，首次构建会走 Gradle 拉依赖。
+- 单测里若真要测 `SharedPrefsTodoStore`，先 `SharedPreferences.setMockInitialValues({})`；但业务单测一律注入 `MemoryTodoStore`，不碰平台通道。
+- 构建环境注意：本机 pub 缓存在 `C:` 盘、工程在 `D:` 盘，Kotlin 增量编译会因「不同根路径」报错，因此 `android/gradle.properties` 里加了 `kotlin.incremental=false`（只影响编译速度）。若换机器，pub 缓存与工程同盘时可去掉。
 
 ---
 
@@ -567,7 +570,7 @@ flutter:
 4. **表单**：`note_form_page` 新建/编辑/删除 + 路由。
 5. **回顾**：`day_bar_chart` + `week_sheet` + `stats_page`。
 6. **资产与细节**：字体、纸纹、插画、动效、空状态、SnackBar。
-7. **收尾**：`FileTodoStore` 接上、冷启动验证（杀进程重开数据仍在）、删除旧 `main.dart` 里的历史代码（会被整体覆盖）、更新 README。
+7. **收尾**：`SharedPrefsTodoStore` 接上、冷启动验证（杀进程重开数据仍在）、更新 README。
 
 验收清单：
 
@@ -590,4 +593,4 @@ flutter:
 | `test/state/todo_controller_test.dart` | 增删改、toggle 的 completedAt、pending/doneToday 顺序、周计数、streak 边界（跨月、今天未完成） |
 | `test/widget/home_page_test.dart` | 注入 `MemoryTodoStore` 后：标题件数、两段列表、空态 |
 
-测试里永远用 `MemoryTodoStore`，不碰文件系统（避免测试依赖真实路径）。如需测试 `FileTodoStore` 本身，用 `Directory.systemTemp` 创建临时目录。
+测试里永远用 `MemoryTodoStore`，不碰平台通道。要验证 `SharedPrefsTodoStore` 本身，先 `SharedPreferences.setMockInitialValues({})`，再走一遍 save → load。

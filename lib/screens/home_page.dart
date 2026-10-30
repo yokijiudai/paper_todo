@@ -58,7 +58,11 @@ class _DoneRow extends StatelessWidget {
 
     return Row(
       children: [
-        const Icon(Icons.check_circle_rounded, size: 18, color: AppColors.accent),
+        const Icon(
+          Icons.check_circle_rounded,
+          size: 18,
+          color: AppColors.accent,
+        ),
         const SizedBox(width: AppSpace.s3),
         Expanded(child: Text(label, style: theme.textTheme.titleMedium)),
         Text(detail, style: theme.textTheme.bodySmall),

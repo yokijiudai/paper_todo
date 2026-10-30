@@ -29,11 +29,7 @@ class PaperScaffold extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           const _PaperTexture(),
-          SafeArea(
-            top: true,
-            bottom: false,
-            child: body,
-          ),
+          SafeArea(top: true, bottom: false, child: body),
         ],
       ),
       bottomNavigationBar: bottomBar,

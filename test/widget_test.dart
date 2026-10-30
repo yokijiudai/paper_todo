@@ -1,30 +1,28 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:node/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('骨架首屏能渲染，标题与标签栏都在', (tester) async {
+    await tester.pumpWidget(const TodoApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('先把今天\n写下来。'), findsOneWidget);
+    expect(find.text('今天'), findsWidgets);
+    expect(find.text('回顾'), findsWidgets);
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('点「回顾」切到统计占位页，点「今天」切回来', (tester) async {
+    await tester.pumpWidget(const TodoApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text('回顾').last);
+    await tester.pumpAndSettle();
+    expect(find.text('这一周的\n节奏。'), findsOneWidget);
+
+    await tester.tap(find.text('今天').last);
+    await tester.pumpAndSettle();
+    expect(find.text('先把今天\n写下来。'), findsOneWidget);
   });
 }
