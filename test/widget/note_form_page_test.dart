@@ -12,8 +12,9 @@ DateTime get _clock => DateTime(2026, 10, 30, 9);
 Future<TodoController> _pumpApp(
   WidgetTester tester, {
   List<TodoNote> seed = const <TodoNote>[],
+  Size size = const Size(390, 844),
 }) async {
-  tester.view.physicalSize = const Size(390, 844);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
@@ -140,5 +141,20 @@ void main() {
 
     expect(controller.all, hasLength(1));
     expect(find.text('编辑这条待办'), findsOneWidget);
+  });
+
+  testWidgets('窄屏 320×640 与目标机型下表单都不溢出', (tester) async {
+    for (final size in const [Size(390, 844), Size(320, 640)]) {
+      await _pumpApp(tester, size: size);
+      await _openNewForm(tester);
+
+      expect(find.text('新建一条待办'), findsOneWidget);
+      expect(find.text('预计花费（可选）'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: '$size 下不应有溢出');
+
+      // 退回首页，否则下一轮会叠在上一个路由上。
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+    }
   });
 }
