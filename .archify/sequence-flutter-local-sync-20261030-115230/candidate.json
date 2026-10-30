@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "待办 App 前后端交互流程（本地存储）",
+    "locale": "zh-CN",
+    "output": ".archify/sequence-flutter-local-sync-20261030-115230/flutter-local-sync.html",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1050, 670]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "点击 / 输入", "icon": "person" },
+    { "id": "ui", "type": "frontend", "label": "App 前端", "sublabel": "main.dart · 页面 · 组件" },
+    { "id": "ctl", "type": "backend", "label": "TodoController", "sublabel": "状态 + 派生数据" },
+    { "id": "scope", "type": "messagebus", "label": "TodoScope", "sublabel": "InheritedNotifier 广播" },
+    { "id": "store", "type": "backend", "label": "FileTodoStore", "sublabel": "TodoStore 实现" },
+    { "id": "fs", "type": "database", "label": "本地文件", "sublabel": "todo_notes.json" }
+  ],
+  "segments": [
+    { "from": 150, "to": 340, "label": "① 冷启动读取" },
+    { "from": 346, "to": 450, "label": "② 点击与通知回流" },
+    { "from": 458, "to": 566, "label": "③ 防抖落盘" }
+  ],
+  "messages": [
+    { "id": "m-load", "from": "ui", "to": "ctl", "y": 160, "label": "load()", "variant": "emphasis" },
+    { "id": "m-read", "from": "ctl", "to": "store", "y": 188, "label": "read()", "variant": "emphasis" },
+    { "id": "m-read-file", "from": "store", "to": "fs", "y": 216, "label": "读取 todo_notes.json", "variant": "default" },
+    { "id": "m-json", "from": "fs", "to": "store", "y": 244, "label": "JSON 文本", "variant": "return" },
+    { "id": "m-notes", "from": "store", "to": "ctl", "y": 272, "label": "List<TodoNote>", "variant": "return" },
+    { "id": "m-notify-1", "from": "ctl", "to": "scope", "y": 300, "label": "notifyListeners()", "variant": "dashed" },
+    { "id": "m-render-1", "from": "scope", "to": "ui", "y": 328, "label": "渲染两段列表", "variant": "return" },
+    { "id": "m-tap", "from": "user", "to": "ui", "y": 356, "label": "点击 CheckCircle", "variant": "default" },
+    { "id": "m-toggle", "from": "ui", "to": "ctl", "y": 384, "label": "toggle(noteId)", "variant": "emphasis" },
+    { "id": "m-notify-2", "from": "ctl", "to": "scope", "y": 412, "label": "notifyListeners()", "variant": "dashed" },
+    { "id": "m-render-2", "from": "scope", "to": "ui", "y": 440, "label": "首页 / 统计同步刷新", "variant": "return" },
+    { "id": "m-save", "from": "ctl", "to": "store", "y": 468, "label": "save(all) · 250ms 防抖", "variant": "emphasis" },
+    { "id": "m-write", "from": "store", "to": "fs", "y": 496, "label": "写临时文件 → rename", "variant": "default" },
+    { "id": "m-write-ok", "from": "fs", "to": "store", "y": 524, "label": "写入完成", "variant": "return" },
+    { "id": "m-done", "from": "store", "to": "ctl", "y": 552, "label": "Future 完成", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "ui", "from": 160, "to": 336 },
+    { "participant": "ui", "from": 356, "to": 444 },
+    { "participant": "ctl", "from": 188, "to": 566 },
+    { "participant": "store", "from": 216, "to": 292 },
+    { "participant": "store", "from": 468, "to": 560 },
+    { "participant": "fs", "from": 216, "to": 280 },
+    { "participant": "fs", "from": 496, "to": 536 },
+    { "participant": "scope", "from": 300, "to": 340 },
+    { "participant": "scope", "from": 412, "to": 448 }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "这个项目没有远程后端",
+      "items": [
+        "没有 HTTP 请求、没有账号体系、没有服务器或云数据库",
+        "所谓「后端」就是 controller 之下的一层：TodoStore 接口 + 手机文件系统",
+        "唯一的外部依赖是 path_provider，用来拿到应用文档目录"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "两条通信通道",
+      "items": [
+        "调用通道：UI → TodoController → FileTodoStore → dart:io，逐层 await",
+        "通知通道：notifyListeners() → TodoScope(InheritedNotifier) → 依赖的 widget 重建",
+        "页面只调 controller，从不直接读写文件；实现类只在 main.dart 装配时注入"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "落盘策略",
+      "items": [
+        "250ms 防抖：连点勾选合并成一次写，避免反复 IO",
+        "先写 .tmp 再 rename，原子替换，不会留下半截 JSON",
+        "写失败只在 controller.error 暴露，不阻塞界面操作",
+        "测试与预览用 MemoryTodoStore，不碰真实磁盘"
+      ]
+    }
+  ]
+}

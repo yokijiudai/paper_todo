@@ -57,10 +57,17 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  # 纸纹：256×256 可平铺，整屏以 7% 不透明度叠加（由 tool/gen_paper_texture.py 生成）
+  assets:
+    - assets/textures/
+
+  # 标题衬线字体：等 assets/fonts/NotoSerifSC-SemiBold.otf 到位后再取消注释。
+  # 缺文件时声明 fonts 会让构建直接失败，所以先注释掉，由 AppTheme.serifFallback 兜底。
+  # fonts:
+  #   - family: NotoSerifSC
+  #     fonts:
+  #       - asset: assets/fonts/NotoSerifSC-SemiBold.otf
+  #         weight: 600
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
