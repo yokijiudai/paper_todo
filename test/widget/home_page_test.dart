@@ -149,4 +149,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('今天要做的\n三件事'), findsOneWidget);
   });
+
+  testWidgets('系统字号放大 1.3 倍后首页与回顾页都不溢出', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await _pumpApp(tester, seed: _seedNotes());
+    expect(tester.takeException(), isNull);
+    expect(find.text('今天要做的\n三件事'), findsOneWidget);
+
+    await tester.tap(find.text('回顾'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('每天完成的件数'), findsOneWidget);
+  });
 }

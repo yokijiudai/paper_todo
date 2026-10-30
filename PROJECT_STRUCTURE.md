@@ -523,11 +523,11 @@ class TodoApp extends StatelessWidget {
 
 | 资产 | 规格 | 说明 |
 |---|---|---|
-| `fonts/NotoSerifSC-SemiBold.otf` | 字重 600 | 中文全量约 8–12MB。上线前用 `pyftsubset` 只留常用 3500 字 + 标点，可压到 1–2MB；`fontFamilyFallback: ['Songti SC', 'STSong', 'serif']` |
-| `textures/paper.png` | 512×512 无缝、灰阶噪声 | 叠在整屏，`opacity .07`，`ImageRepeat.repeat`，`IgnorePointer`；用 `RepaintBoundary` 包住避免整页重绘 |
+| `fonts/NotoSerifSC-SemiBold.otf` | 字重 600，**子集 163 KB / 717 字** | 完整 OTF 11.8MB 不进仓库（放 `build/fontsrc/`，`build/` 已忽略）。`tool/subset_font.py` 扫 `lib/**/*.dart` 里出现的汉字、标点、ASCII，用 `pyftsubset` 裁成 `assets/fonts/` 下的子集；**改了标题文案要重跑脚本**，否则新字会回落到系统衬线。用户输入不经过衬线，所以子集不会缺字 |
+| `textures/paper.png` | 256×256 无缝、灰阶噪声 | 叠在整屏，`opacity .07`，`ImageRepeat.repeat`，`IgnorePointer`；由 `tool/gen_paper_texture.py` 生成（PIL，seed 固定） |
 | `art/*.svg` | 预留 | 首屏插画当前用 `CustomPainter` 画（旋转、描边、阴影都精确可控，且不用加依赖）。将来换成可编辑插画时再加 `flutter_svg`，并把 SVG 里的 `var(--color-*)` 换成具体色值（`flutter_svg` 不解析 CSS 变量） |
 
-字体没到位前：`fontFamily` 留空走系统字体，标题用 `w700` + 负字距近似，不影响布局验收。
+衬线字体兜底：`AppTheme` 里 `fontFamily: 'NotoSerifSC'` + `fontFamilyFallback: ['Songti SC', 'STSong', 'serif']`，子集没覆盖的字会落到系统衬线，不会出现方框。
 
 ---
 
@@ -582,7 +582,7 @@ flutter:
 6. **资产与细节**：字体、纸纹、插画、动效、空状态、SnackBar。
 7. **收尾**：`SharedPrefsTodoStore` 接上、冷启动验证（杀进程重开数据仍在）、更新 README。
 
-**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`a181f2d`：`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行进编辑）· 4 表单 ✅（`828d8ed` 新建/编辑/删除 + SnackBar 撤销；`eed6772` 预计花费改为时长）· 5 回顾 ✅（`day_bar_chart` / `week_sheet` / `stats_page`；54 例测试全过，模拟器实测截图在 `build/preview/stats*.png`）。
+**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`a181f2d`：`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行进编辑）· 4 表单 ✅（`828d8ed` 新建/编辑/删除 + SnackBar 撤销；`eed6772` 预计花费改为时长）· 5 回顾 ✅（`2ca600e`：`day_bar_chart` / `week_sheet` / `stats_page`，54 例测试全过，模拟器截图在 `build/preview/stats*.png`）· 6 资产与细节 ✅（衬线字体子集 163KB + `tool/subset_font.py`；字号 1.3 倍实测首页/回顾/表单都不溢出并加了回归测试；纸纹、插画、勾选动效、空态、SnackBar 均已就位）。
 
 验收清单：
 
@@ -603,7 +603,7 @@ flutter:
 |---|---|
 | `test/models/todo_note_test.dart` | JSON 往返、`completedAt` 为 null、未知 category 回落、坏时间字符串 |
 | `test/state/todo_controller_test.dart` | 增删改、toggle 的 completedAt、pending/doneToday 顺序、周计数、streak 边界（跨月、今天未完成） |
-| `test/widget/home_page_test.dart` | 注入 `MemoryTodoStore` 后：标题件数、两段列表、空态、点行进编辑 |
+| `test/widget/home_page_test.dart` | 注入 `MemoryTodoStore` 后：标题件数、两段列表、空态、点行进编辑、字号 1.3 倍不溢出 |
 | `test/widget/note_form_page_test.dart` | 新建/编辑/删除 + 撤销、保存禁用、预计花费档位、320×640 与 390×844 不溢出 |
 | `test/widget/stats_page_test.dart` | 默认选最多的一天、点柱切换明细、空周文案、换一周联动、年月选择器、320×640 不溢出 |
 

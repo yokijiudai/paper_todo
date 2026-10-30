@@ -63,13 +63,13 @@ flutter:
   assets:
     - assets/textures/
 
-  # 标题衬线字体：等 assets/fonts/NotoSerifSC-SemiBold.otf 到位后再取消注释。
-  # 缺文件时声明 fonts 会让构建直接失败，所以先注释掉，由 AppTheme.serifFallback 兜底。
-  # fonts:
-  #   - family: NotoSerifSC
-  #     fonts:
-  #       - asset: assets/fonts/NotoSerifSC-SemiBold.otf
-  #         weight: 600
+  # 标题衬线字体：子集版，由 tool/subset_font.py 从完整字体裁出来（163 KB）。
+  # 改了标题文案后重跑脚本，否则新字会回落到系统衬线。
+  fonts:
+    - family: NotoSerifSC
+      fonts:
+        - asset: assets/fonts/NotoSerifSC-SemiBold.otf
+          weight: 600
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
