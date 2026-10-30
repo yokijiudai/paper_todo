@@ -582,18 +582,18 @@ flutter:
 6. **资产与细节**：字体、纸纹、插画、动效、空状态、SnackBar。
 7. **收尾**：`SharedPrefsTodoStore` 接上、冷启动验证（杀进程重开数据仍在）、更新 README。
 
-**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`a181f2d`：`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行进编辑）· 4 表单 ✅（`828d8ed` 新建/编辑/删除 + SnackBar 撤销；`eed6772` 预计花费改为时长）· 5 回顾 ✅（`2ca600e`：`day_bar_chart` / `week_sheet` / `stats_page`，54 例测试全过，模拟器截图在 `build/preview/stats*.png`）· 6 资产与细节 ✅（衬线字体子集 163KB + `tool/subset_font.py`；字号 1.3 倍实测首页/回顾/表单都不溢出并加了回归测试；纸纹、插画、勾选动效、空态、SnackBar 均已就位）。
+**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`a181f2d`：`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行进编辑）· 4 表单 ✅（`828d8ed` 新建/编辑/删除 + SnackBar 撤销；`eed6772` 预计花费改为时长）· 5 回顾 ✅（`2ca600e`：`day_bar_chart` / `week_sheet` / `stats_page`，54 例测试全过，模拟器截图在 `build/preview/stats*.png`）· 6 资产与细节 ✅（`34095d7`：衬线字体子集 163KB + `tool/subset_font.py`；字号 1.3 倍实测首页/回顾/表单都不溢出并加了回归测试；纸纹、插画、勾选动效、空态、SnackBar 均已就位）· 7 收尾 ✅（冷启动实测：勾一条、加一条、`am force-stop` 后重开，数据与完成状态都在；release APK 48.5 MB 装机可跑；README 重写，`docs/screenshots/` 放真机截图）。
 
 验收清单：
 
-- [ ] 390×844 下四屏无溢出、无截断；系统字号放大 1.3 倍仍可读
-- [ ] 所有可点区域 ≥44×44
-- [ ] 杀进程重开，数据与完成状态一致
-- [ ] 勾选/取消后，首页计数、圆点、回顾柱状图同步变化
-- [ ] 周切换跨月、跨年（12 月 → 1 月）正确
-- [ ] 三处空状态文案正确
-- [ ] `flutter analyze` 0 issue、`flutter test` 全绿
-- [ ] 与 `design/*.html` 并排比对的视觉差异只剩字体（未装字体前）
+- [x] 390×844 下四屏无溢出、无截断；系统字号放大 1.3 倍仍可读（模拟器 1.3 倍 + 回归测试）
+- [x] 所有可点区域 ≥44×44（药丸 44、保存 52、关闭/删除 44、勾选圈 44 命中区）
+- [x] 杀进程重开，数据与完成状态一致（`am force-stop` + 重开实测）
+- [x] 勾选/取消后，首页计数、圆点、回顾柱状图同步变化（widget 测试覆盖）
+- [x] 周切换跨月、跨年（12 月 → 1 月）正确（`stats_page_test` 年月选择器 + 周归属按周四所在月）
+- [x] 三处空状态文案正确（首页两段、回顾页空周/空天）
+- [x] `flutter analyze` 0 issue、`flutter test` 55 例全绿
+- [x] 与 `design/*.html` 并排比对：字体子集已装，剩余差异只有状态栏（真机系统栏 vs 原型画的假状态栏）
 
 ---
 
