@@ -247,8 +247,12 @@ class MemoryTodoStore implements TodoStore { /* 测试 / 预览用 */ }
 
 ```dart
 class TodoController extends ChangeNotifier {
-  TodoController(this._store);
+  TodoController(this._store, {
+    Duration saveDebounce = const Duration(milliseconds: 250), // 测试里调小
+    DateTime Function()? now,                                  // 注入固定时钟
+  });
   final TodoStore _store;
+  final Duration saveDebounce;
 
   bool get isLoading;
   Object? get error;
@@ -262,16 +266,18 @@ class TodoController extends ChangeNotifier {
   int streakDays([DateTime? today]);          // 连续完成天数
 
   Future<void> load();
-  Future<TodoNote> add({required String content, required TodoCategory category, String? timeLabel});
+  Future<TodoNote> add({required String content, TodoCategory category = TodoCategory.work, String? timeLabel});
   Future<void> update(TodoNote note);
   Future<void> toggle(String id);
   Future<void> remove(String id);
+  Future<void> flush();                       // 跳过防抖立即落盘（退出/进后台）
 }
 
 class TodoScope extends InheritedNotifier<TodoController> {
   const TodoScope({required TodoController controller, required super.child, super.key})
       : super(notifier: controller);
-  static TodoController of(BuildContext context) => ...;
+  static TodoController of(BuildContext context) => ...;      // 缺席时 assert
+  static TodoController? maybeOf(BuildContext context);
 }
 ```
 
@@ -293,6 +299,10 @@ class TodoScope extends InheritedNotifier<TodoController> {
 | `weekRange(DateTime weekStart)` | `10.23 – 10.29` |
 | `cnNumber(int)` | `五`（1–10 用汉字，>10 用数字） |
 | `weekdayShort(int)` | `一`…`日`（周一开头） |
+| `dateOnly / addDays / mondayOf` | 日期运算：去时分秒、按日历加减天、取周一 |
+| `isSameDay / daysBetween` | 同日判断、纯日期差（UTC 计算，不受夏令时影响） |
+| `dotDate(DateTime)` | `10.25`（图表坐标轴、周区间） |
+| `weekOfMonth(DateTime weekStart)` | `5`（以该周周四所在月份归属，9.28 那周算十月第一周） |
 
 全部纯函数、无状态，单测好写。
 
