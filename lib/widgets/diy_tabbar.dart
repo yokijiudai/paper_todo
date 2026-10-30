@@ -149,21 +149,28 @@ class _AddButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: '新建待办',
-      child: Material(
-        color: AppColors.primary,
-        shape: const CircleBorder(),
-        elevation: 8,
-        shadowColor: AppColors.alpha(AppColors.primary, 0.38),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: const SizedBox(
-            width: AppSize.tap,
-            height: AppSize.tap,
-            child: Icon(
-              Icons.add_rounded,
-              size: 24,
-              color: AppColors.primaryInk,
+      // 用手写阴影代替 Material 的 elevation：后者带色阴影在浅色底上会晕成
+      // 一圈「光环」，原型用的是更柔的暖褐投影。
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: AppShadows.lift,
+        ),
+        child: Material(
+          color: AppColors.primary,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: const SizedBox(
+              width: AppSize.tap,
+              height: AppSize.tap,
+              child: Icon(
+                Icons.add_rounded,
+                size: 24,
+                color: AppColors.primaryInk,
+              ),
             ),
           ),
         ),

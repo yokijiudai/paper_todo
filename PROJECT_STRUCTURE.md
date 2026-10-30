@@ -582,6 +582,8 @@ flutter:
 6. **资产与细节**：字体、纸纹、插画、动效、空状态、SnackBar。
 7. **收尾**：`SharedPrefsTodoStore` 接上、冷启动验证（杀进程重开数据仍在）、更新 README。
 
+**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行暂未接编辑，留给第 4 步）。
+
 验收清单：
 
 - [ ] 390×844 下四屏无溢出、无截断；系统字号放大 1.3 倍仍可读

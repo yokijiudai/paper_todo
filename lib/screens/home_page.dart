@@ -1,72 +1,218 @@
 import 'package:flutter/material.dart';
 
-import '../theme/tokens.dart';
-import '../widgets/paper_scaffold.dart';
+import 'package:node/state/todo_controller.dart';
+import 'package:node/theme/tokens.dart';
+import 'package:node/utils/formatters.dart';
+import 'package:node/widgets/hero_notes_art.dart';
+import 'package:node/widgets/note_tile.dart';
 
-/// 今天：标题、进度、未完成、今天已完成。
+/// 今天：上半屏是还没做的，下半屏是已经做完的。
 ///
-/// 第一步只搭骨架：纸底、字号层级、卡片与留白先落位，数据在第二步接入后替换占位内容。
+/// 页面本身不持有数据，所有统计都从 [TodoController] 的派生属性取，
+/// 不在这里判断「今天」「完成」这类业务口径。
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = TodoScope.of(context);
     final theme = Theme.of(context);
+    final now = DateTime.now();
+    final pending = controller.pending;
+    final done = controller.doneToday;
+    final total = pending.length + done.length;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         AppSize.pageX,
-        AppSpace.s2,
+        AppSpace.s4,
         AppSize.pageX,
-        AppSpace.s6,
+        AppSpace.s5,
       ),
       children: [
-        Text('今天', style: theme.textTheme.labelSmall),
-        const SizedBox(height: AppSpace.s2),
-        Text('先把今天\n写下来。', style: theme.textTheme.displayLarge),
-        const SizedBox(height: AppSpace.s3),
         Text(
-          '骨架已就绪：纸底、主题变量、标签栏。\n数据层与待办列表在下一步接入。',
-          style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
-        ),
-        const SizedBox(height: AppSpace.s5),
-        const PaperCard(
-          child: Column(
-            children: [
-              _DoneRow('设计变量', 'theme/tokens.dart'),
-              SizedBox(height: AppSpace.s3),
-              _DoneRow('纸面与卡片', 'widgets/paper_scaffold.dart'),
-              SizedBox(height: AppSpace.s3),
-              _DoneRow('标签栏', 'widgets/diy_tabbar.dart'),
-            ],
+          dayKicker(now),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColors.muted,
+            letterSpacing: 0.2,
           ),
+        ),
+        const SizedBox(height: AppSpace.s2),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _headline(pending.length, total),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.displayLarge,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpace.s2),
+            const HeroNotesArt(),
+          ],
+        ),
+        const SizedBox(height: AppSpace.s4),
+        _ProgressLine(done: done.length, pending: pending.length),
+        const SizedBox(height: AppSpace.s5),
+        const _SectionHeader('未完成'),
+        const SizedBox(height: AppSpace.s3),
+        if (pending.isEmpty)
+          const _EmptyHint('现在没有待办。', '点下面的 + 写第一条。')
+        else
+          for (var i = 0; i < pending.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            NoteTile(
+              note: pending[i],
+              onToggle: () => controller.toggle(pending[i].id),
+            ),
+          ],
+        const SizedBox(height: AppSpace.s5),
+        const _SectionHeader('今天已完成'),
+        const SizedBox(height: AppSpace.s3),
+        if (done.isEmpty)
+          const _EmptyHint('今天还没有完成的事。', '做完一件，点前面的圈。')
+        else
+          for (var i = 0; i < done.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            NoteTile(
+              note: done[i],
+              onToggle: () => controller.toggle(done[i].id),
+            ),
+          ],
+      ],
+    );
+  }
+
+  /// 大标题：没待办时问「想做什么」，全做完时道一声，否则报数。
+  String _headline(int pending, int total) {
+    if (total == 0) {
+      return '今天\n想做什么？';
+    }
+    if (pending == 0) {
+      return '今天的事\n都做完了。';
+    }
+    return '今天要做的\n${cnNumber(pending)}件事';
+  }
+}
+
+/// 「已完成 X 件 · 还有 Y 件」+ 右侧进度点。
+class _ProgressLine extends StatelessWidget {
+  const _ProgressLine({required this.done, required this.pending});
+
+  final int done;
+  final int pending;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = done + pending;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            total == 0 ? '还没有待办' : '已完成 $done 件 · 还有 $pending 件',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppColors.muted),
+          ),
+        ),
+        if (total > 0) _ProgressDots(done: done, total: total),
+      ],
+    );
+  }
+}
+
+/// 最多画 8 个点，超出的部分用「8+」的省略方式表达（原型没有画到那么多）。
+class _ProgressDots extends StatelessWidget {
+  const _ProgressDots({required this.done, required this.total});
+
+  final int done;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = total > 8 ? 8 : total;
+    final active = done > 8 ? 8 : done;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: i < active ? AppColors.accent : AppColors.line,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+            color: AppColors.muted,
+          ),
+        ),
+        const SizedBox(width: AppSpace.s3),
+        const Expanded(
+          child: Divider(height: 1, thickness: 1, color: AppColors.line),
         ),
       ],
     );
   }
 }
 
-class _DoneRow extends StatelessWidget {
-  const _DoneRow(this.label, this.detail);
+/// 没内容时的两行浅话，比空白更像「这个位置本来该有东西」。
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint(this.first, this.second);
 
-  final String label;
-  final String detail;
+  final String first;
+  final String second;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        const Icon(
-          Icons.check_circle_rounded,
-          size: 18,
-          color: AppColors.accent,
-        ),
-        const SizedBox(width: AppSpace.s3),
-        Expanded(child: Text(label, style: theme.textTheme.titleMedium)),
-        Text(detail, style: theme.textTheme.bodySmall),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.s2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            first,
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            second,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.muted.withValues(alpha: 0.78),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
