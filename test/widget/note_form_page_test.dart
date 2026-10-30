@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:node/data/todo_store.dart';
-import 'package:node/main.dart';
-import 'package:node/models/todo_note.dart';
-import 'package:node/state/todo_controller.dart';
+import 'package:paper_todo/data/todo_store.dart';
+import 'package:paper_todo/main.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/state/todo_controller.dart';
 
 /// 固定时钟，避免测试跑在不同日期时「今天」漂移。
 DateTime get _clock => DateTime(2026, 10, 30, 9);

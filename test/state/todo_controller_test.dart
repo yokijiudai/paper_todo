@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:node/data/todo_store.dart';
-import 'package:node/models/todo_note.dart';
-import 'package:node/state/todo_controller.dart';
+import 'package:paper_todo/data/todo_store.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/state/todo_controller.dart';
 
 /// load 直接抛错的存储，用来验证 controller 不把异常抛给 UI。
 class _FailingStore implements TodoStore {

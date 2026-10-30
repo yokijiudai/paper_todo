@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:node/data/todo_store.dart';
-import 'package:node/main.dart';
-import 'package:node/models/todo_note.dart';
-import 'package:node/state/todo_controller.dart';
-import 'package:node/widgets/check_circle.dart';
-import 'package:node/widgets/note_tile.dart';
+import 'package:paper_todo/data/todo_store.dart';
+import 'package:paper_todo/main.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/state/todo_controller.dart';
+import 'package:paper_todo/widgets/check_circle.dart';
+import 'package:paper_todo/widgets/note_tile.dart';
 
 /// 固定时钟：2026-10-30 是周五，避免「今天」在不同日期跑测试时漂移。
 DateTime get _clock => DateTime(2026, 10, 30, 9);

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:node/models/todo_note.dart';
+import 'package:paper_todo/models/todo_note.dart';
 
 void main() {
   final createdAt = DateTime(2026, 10, 30, 9, 12);

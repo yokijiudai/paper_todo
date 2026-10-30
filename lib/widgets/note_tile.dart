@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:node/models/todo_note.dart';
-import 'package:node/theme/tokens.dart';
-import 'package:node/widgets/category_chip.dart';
-import 'package:node/widgets/check_circle.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/theme/tokens.dart';
+import 'package:paper_todo/widgets/category_chip.dart';
+import 'package:paper_todo/widgets/check_circle.dart';
 
 /// 一条待办：左侧勾选圈 + 正文 + 分类与时间。
 ///

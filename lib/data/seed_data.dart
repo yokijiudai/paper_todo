@@ -1,4 +1,4 @@
-import 'package:node/models/todo_note.dart';
+import 'package:paper_todo/models/todo_note.dart';
 
 /// 首次启动是否写入示例数据。
 ///

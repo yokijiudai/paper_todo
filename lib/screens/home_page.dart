@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:node/models/todo_note.dart';
-import 'package:node/state/todo_controller.dart';
-import 'package:node/theme/tokens.dart';
-import 'package:node/utils/formatters.dart';
-import 'package:node/widgets/hero_notes_art.dart';
-import 'package:node/widgets/note_tile.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/state/todo_controller.dart';
+import 'package:paper_todo/theme/tokens.dart';
+import 'package:paper_todo/utils/formatters.dart';
+import 'package:paper_todo/widgets/hero_notes_art.dart';
+import 'package:paper_todo/widgets/note_tile.dart';
 
 import 'note_form_page.dart';
 

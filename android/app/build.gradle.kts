@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.node"
+    namespace = "io.github.yokijiudai.paper_todo"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,8 +15,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.node"
+        // 上架前可改成自己的域名反写；此处与 Kotlin 包名保持一致。
+        applicationId = "io.github.yokijiudai.paper_todo"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

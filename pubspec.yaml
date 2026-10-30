@@ -1,4 +1,4 @@
-name: node
+name: paper_todo
 description: "今天要做的 —— 纸感待办 App，Flutter 实现，数据存在本机。"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

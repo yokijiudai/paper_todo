@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:node/data/todo_store.dart';
-import 'package:node/main.dart';
-import 'package:node/models/todo_note.dart';
-import 'package:node/state/todo_controller.dart';
-import 'package:node/widgets/day_bar_chart.dart';
+import 'package:paper_todo/data/todo_store.dart';
+import 'package:paper_todo/main.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/state/todo_controller.dart';
+import 'package:paper_todo/widgets/day_bar_chart.dart';
 
 /// 固定时钟（2026-10-30 周五），周一是 10-26，本周范围 10.26 – 11.01。
 DateTime get _clock => DateTime(2026, 10, 30, 9);

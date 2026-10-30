@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:node/theme/tokens.dart';
+import 'package:paper_todo/theme/tokens.dart';
 
 /// 首屏右上角的「叠纸」插画：三张微微旋转的便签，最前面一张有字迹和勾。
 ///

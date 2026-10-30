@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="node"
+        android:label="今天要做的"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

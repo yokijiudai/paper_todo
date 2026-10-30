@@ -36,7 +36,7 @@ flutter analyze
 首次启动且本地没有数据时，会写入 5 条示例待办（`lib/data/seed_data.dart` 的 `kSeedDemoOnFirstRun`）。清掉重来：
 
 ```bash
-adb shell pm clear com.example.node
+adb shell pm clear io.github.yokijiudai.paper_todo
 ```
 
 ## 结构
@@ -54,7 +54,7 @@ lib/
                            diy_tabbar、hero_notes_art、day_bar_chart、week_sheet
 ```
 
-分层是 `screens → widgets / state → data → models`，`widgets` 不 import `screens` 和 `data`；页面只订阅 `TodoScope`，业务判断都在 controller 里。完整设计、签名、数据契约、原型缺口清单见 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)。
+分层是 `screens → widgets / state → data → models`，`widgets` 不 import `screens` 和 `data`；页面只订阅 `TodoScope`，业务判断都在 controller 里。
 
 ## 技术选择
 
@@ -89,7 +89,7 @@ lib/
 
 ## 验收
 
-`PROJECT_STRUCTURE.md` §13 的八项清单在模拟器与测试里逐项验过。这里留两组「光看代码看不出来」的证据。
+八项验收清单（无溢出、可点区、勾选同步、跨月周切换、空态、冷启动、字号 1.3 倍、`analyze` + `test`）在模拟器与测试里逐项验过。这里留两组「光看代码看不出来」的证据。
 
 **冷启动**：清数据 → 勾掉一条 → 新建一条 → `adb shell am force-stop` → 重开。截图里「团队例会」已经落到「今天已完成」，新条目在未完成里，计数「已完成 3 件 · 还有 3 件」——说明落盘与首启种子都对得上。（新条目是 adb 敲的 ASCII 文本，adb 打不了中文。）
 
@@ -121,6 +121,10 @@ flutter build apk --release --split-per-abi    # 按 ABI 拆，单包会小很�
 ```
 
 目前 release 用的是 debug 签名（Flutter 模板默认），要发布请换成自己的 keystore。Android 之外的平台没验证过。
+
+## 许可
+
+代码使用 [BSD 3-Clause](LICENSE)；字体、图标等第三方资源的来源与许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 已知边界
 

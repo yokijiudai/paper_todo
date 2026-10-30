@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:node/models/todo_note.dart';
-import 'package:node/state/todo_controller.dart';
-import 'package:node/theme/tokens.dart';
-import 'package:node/widgets/paper_scaffold.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/state/todo_controller.dart';
+import 'package:paper_todo/theme/tokens.dart';
+import 'package:paper_todo/widgets/paper_scaffold.dart';
 
 /// 新建 / 编辑待办（同一页，传 [note] 即编辑）。
 ///

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:node/models/todo_note.dart';
-import 'package:node/theme/tokens.dart';
+import 'package:paper_todo/models/todo_note.dart';
+import 'package:paper_todo/theme/tokens.dart';
 
 /// 分类小标签：工作 / 生活 / 学习 / 灵感。
 ///
