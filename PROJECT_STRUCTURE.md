@@ -316,8 +316,8 @@ class TodoScope extends InheritedNotifier<TodoController> {
 | `category_chip.dart` | `CategoryChip({required TodoCategory category, bool dense = false})` | 高 22、内边距 0/9、字 11/w600、全圆角；配色见下表 |
 | `diy_tabbar.dart` | `DiyTabBar({required int index, required ValueChanged<int> onSelect, required VoidCallback onAdd})`、`static double heightOf(BuildContext)` | `surface` 底 + 顶边 1px `line` + 上投影；三格等分；中间 44 圆钮上浮 18，`primary` 底 + 阴影 |
 | `hero_notes_art.dart` | `HeroNotesArt({double width = 112})` | 三张旋转便签（沙色 / 浅绿 / 纸白描边）+ 三条横线 + 勾选圆点，画笔还原原型 SVG 的层叠与角度 |
-| `day_bar_chart.dart` | `DayBarChart({required List<int> counts, required DateTime weekStart, required int selected, required ValueChanged<int> onSelect})` | 高度按 310:132 等比；柱宽 20、圆角 6、上限高度按 week 最大值归一；柱顶数字 12px，底部周几；底层手绘横线用两段三次贝塞尔；点按按 `dx / width * 7` 取整，键盘方向键可选支持 |
-| `week_sheet.dart` | `Future<DateTime?> showWeekSheet(BuildContext context, {required DateTime weekStart, int weekCount = 0})` | `showModalBottomSheet(isScrollControlled: true, backgroundColor: transparent)`；顶部抓手 40×4；月历 6 行 × 7 列，**一行 = 一周**，选中行 `primarySoft` 底、字 `primaryDeep`；`<` `>` 切月，点标题切到年/月选择（4×3 网格）；底部「已选 10.23 – 10.29」+ 完成按钮 |
+| `day_bar_chart.dart` | `DayBarChart({required List<int> counts, required int selectedIndex, required DateTime weekStart, required ValueChanged<int> onSelect})` | 宽度自适应、高度按 310:132 等比；柱宽 20、圆角 6、高度按本周最大值归一（0 件留 3px 小截）；柱顶数字 12px、底部周几；底层手绘横线用三次贝塞尔 + 二次贝塞尔拼；点按按 `dx / 列宽` 取整到 0..6；整图一个 `Semantics` 标签 |
+| `week_sheet.dart` | `Future<DateTime?> showWeekSheet(BuildContext context, {required DateTime weekStart, required int Function(DateTime weekStart) weekCount})` | `showModalBottomSheet(isScrollControlled: true, backgroundColor: transparent)`；顶部抓手 40×4；月历按周分行（行数按当月天数算，全落在下月的行不画），**一行 = 一周**，选中行 `primarySoft` 底、字 `primaryDeep`；`<` `>` 切月，点标题切到年月选择（年箭头 + 12 个月 4×3 网格）；底部「已选 10.26 – 11.1 · 本周 N 件」+ 完成按钮；`weekCount` 由页面传 controller 统计进来，弹层不依赖 controller |
 
 分类配色（工作 / 生活 / 学习 来自原型；**灵感是新增，原型只有药丸没有 chip 样式**）：
 
@@ -388,12 +388,12 @@ ListView
 ├─ display: '这周完成了 N 件'
 ├─ PaperCard: 完成 N 件 / 连续记录 N 天（竖分割线）
 ├─ PaperCard: '每天完成的件数' + 日期范围 + DayBarChart + 提示
-└─ PaperCard: 某天标题 + 'N 件' + 明细（NoteTile 的紧凑变体或 _DayRow）
+└─ PaperCard: 某天标题 + 'N 件' + 明细（绿勾 + 内容 + 右侧预计花费，缺省回落分类名）
 ```
 
-- 默认选中「本周完成最多的一天」，与原型一致。
-- `换一周` → `showWeekSheet`，返回的周一写入 `_weekStart`，`_selected` 重置。
-- 空周：柱状图全 0（保留基线）、明细显示「这天没有完成记录」。
+- 默认选中「本周完成最多的一天」（同票取靠前那天）；用户手动点过柱子后，数据变化不再跳走。
+- `换一周` → `showWeekSheet`（`weekCount` 回调传本周计数），返回的周一写入 `_weekStart`，`_selected` 与「手动选过」标记一起重置。
+- 空周：柱状图全 0（保留基线，选中那根留 3px 小截）、明细显示「这天没有完成记录」；周切换后标题、摘要、柱状图、明细一起重算。
 
 ### 4.9 `main.dart`
 
@@ -563,12 +563,12 @@ flutter:
 2. **「灵感」没有 chip 配色**：原型首页只出现工作/生活/学习。→ 已补：沙色底 + 墨色字（对比度 ≈9.8:1）。
 3. **日历首日偏移是写死的**：`firstIndex()` 对 2026 年 10 月返回 6，只为让 10.23–10.29 占满一行。→ 一律用真实 `DateTime.weekday`，周一开头。
 4. **状态栏和灵动岛是画上去的**（9:41、信号、电量）。→ 已补：系统状态栏 + `SafeArea` + 深色图标。
-5. **空状态缺失**：没有待办、没有今日完成、某天没有记录，三处都要文案。
+5. **空状态缺失**：没有待办、没有今日完成、某天没有记录，三处都要文案。→ 已补：首页两段各有空态提示，回顾页「这一周还没有完成记录」「这天没有完成记录」。
 6. **删除没有确认**：detail 页直接删除。→ 已补：确认弹窗 + 删除后 SnackBar 可撤销。
 7. **数字与文案写死**：「五件事」「14 件」「9 天」「10 月 29 日 · 周三」。→ 全部由 controller 派生。
 8. **换一周不联动数据**：原型只改选中行。→ 周切换后柱状图、明细、标题一起重算。
 9. **键盘遮挡**：表单底部有固定保存栏，需确认键盘弹起时按钮仍可见。→ 已补：保存栏放进 `body`（不是 `Scaffold.bottomNavigationBar`），键盘弹起时随内容区一起上抬；模拟器实测通过。
-10. **无障碍**：柱状图每根柱、勾选圈都要有语义标签；点击区 ≥44。
+10. **无障碍**：柱状图每根柱、勾选圈都要有语义标签；点击区 ≥44。→ 已补：勾选圈有 `Semantics(label)`，柱状图整图一个语义标签（逐柱朗读需要再拆成 7 个可聚焦节点，当前没做）；药丸 44、保存 52、关闭/删除 44。
 
 ---
 
@@ -582,7 +582,7 @@ flutter:
 6. **资产与细节**：字体、纸纹、插画、动效、空状态、SnackBar。
 7. **收尾**：`SharedPrefsTodoStore` 接上、冷启动验证（杀进程重开数据仍在）、更新 README。
 
-**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`a181f2d`：`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行进编辑）· 4 表单 ✅（`828d8ed` 新建/编辑/删除 + SnackBar 撤销；`eed6772` 预计花费改为时长）。
+**进度**：1 骨架 ✅（`fb81840`）· 2 数据层 ✅（`3ef2388`）· 3 首页 ✅（`a181f2d`：`note_tile` / `check_circle` / `category_chip` / `hero_notes_art` / `home_page` 已接 controller，`main.dart` 冷启动先读盘、首启写 5 条示例；点行进编辑）· 4 表单 ✅（`828d8ed` 新建/编辑/删除 + SnackBar 撤销；`eed6772` 预计花费改为时长）· 5 回顾 ✅（`day_bar_chart` / `week_sheet` / `stats_page`；54 例测试全过，模拟器实测截图在 `build/preview/stats*.png`）。
 
 验收清单：
 
@@ -603,6 +603,8 @@ flutter:
 |---|---|
 | `test/models/todo_note_test.dart` | JSON 往返、`completedAt` 为 null、未知 category 回落、坏时间字符串 |
 | `test/state/todo_controller_test.dart` | 增删改、toggle 的 completedAt、pending/doneToday 顺序、周计数、streak 边界（跨月、今天未完成） |
-| `test/widget/home_page_test.dart` | 注入 `MemoryTodoStore` 后：标题件数、两段列表、空态 |
+| `test/widget/home_page_test.dart` | 注入 `MemoryTodoStore` 后：标题件数、两段列表、空态、点行进编辑 |
+| `test/widget/note_form_page_test.dart` | 新建/编辑/删除 + 撤销、保存禁用、预计花费档位、320×640 与 390×844 不溢出 |
+| `test/widget/stats_page_test.dart` | 默认选最多的一天、点柱切换明细、空周文案、换一周联动、年月选择器、320×640 不溢出 |
 
 测试里永远用 `MemoryTodoStore`，不碰平台通道。要验证 `SharedPrefsTodoStore` 本身，先 `SharedPreferences.setMockInitialValues({})`，再走一遍 save → load。

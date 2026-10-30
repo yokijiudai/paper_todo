@@ -142,7 +142,8 @@ void main() {
 
     await tester.tap(find.text('回顾'));
     await tester.pumpAndSettle();
-    expect(find.text('这一周的\n节奏。'), findsOneWidget);
+    expect(find.text('每天完成的件数'), findsOneWidget);
+    expect(find.text('换一周'), findsOneWidget);
 
     await tester.tap(find.text('今天'));
     await tester.pumpAndSettle();

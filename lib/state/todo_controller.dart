@@ -36,6 +36,9 @@ class TodoController extends ChangeNotifier {
   /// 上次 [load] 的错误；读失败时列表为空，页面按空数据处理。
   Object? get error => _error;
 
+  /// 当前时间。和「今天」「本周」用的是同一个时钟，页面取默认周时用它。
+  DateTime get now => _now();
+
   /// 全部待办，按创建时间倒序（最新的在最前）。
   List<TodoNote> get all => List.unmodifiable(_notes);
 
