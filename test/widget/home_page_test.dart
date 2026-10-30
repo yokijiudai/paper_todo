@@ -131,6 +131,12 @@ void main() {
     expect(find.text('今天要做的\n一件事'), findsOneWidget);
   });
 
+  testWidgets('只剩两条未完成时，标题用「两件事」而不是「二件事」', (tester) async {
+    await _pumpApp(tester, seed: _seedNotes().take(2).toList());
+
+    expect(find.text('今天要做的\n两件事'), findsOneWidget);
+  });
+
   testWidgets('底部分段可以切到回顾再切回来', (tester) async {
     await _pumpApp(tester, seed: _seedNotes());
 

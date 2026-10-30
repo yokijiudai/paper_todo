@@ -155,6 +155,16 @@ class TodoController extends ChangeNotifier {
     _persist();
   }
 
+  /// 撤销删除：把原来的便签放回列表，保留 id、创建时间和完成时间。
+  ///
+  /// 只在删除提示条的「撤销」里用。已在列表里（比如撤销后又删了）就忽略。
+  void restore(TodoNote note) {
+    if (_notes.any((n) => n.id == note.id)) return;
+    _notes.add(note);
+    notifyListeners();
+    _persist();
+  }
+
   /// 立即落盘（跳过防抖）。页面退出、应用进后台时调一下，保证最后一下改动不丢。
   Future<void> flush() async {
     _saveTimer?.cancel();

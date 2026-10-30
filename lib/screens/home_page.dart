@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:node/models/todo_note.dart';
 import 'package:node/state/todo_controller.dart';
 import 'package:node/theme/tokens.dart';
 import 'package:node/utils/formatters.dart';
 import 'package:node/widgets/hero_notes_art.dart';
 import 'package:node/widgets/note_tile.dart';
+
+import 'note_form_page.dart';
 
 /// 今天：上半屏是还没做的，下半屏是已经做完的。
 ///
@@ -69,6 +72,7 @@ class HomePage extends StatelessWidget {
             NoteTile(
               note: pending[i],
               onToggle: () => controller.toggle(pending[i].id),
+              onTap: () => _edit(context, pending[i]),
             ),
           ],
         const SizedBox(height: AppSpace.s5),
@@ -82,10 +86,16 @@ class HomePage extends StatelessWidget {
             NoteTile(
               note: done[i],
               onToggle: () => controller.toggle(done[i].id),
+              onTap: () => _edit(context, done[i]),
             ),
           ],
       ],
     );
+  }
+
+  /// 点整行进编辑页；时间标签之类的小改动也不用绕道。
+  void _edit(BuildContext context, TodoNote note) {
+    Navigator.of(context).pushNamed(NoteFormPage.routeName, arguments: note);
   }
 
   /// 大标题：没待办时问「想做什么」，全做完时道一声，否则报数。
@@ -96,8 +106,11 @@ class HomePage extends StatelessWidget {
     if (pending == 0) {
       return '今天的事\n都做完了。';
     }
-    return '今天要做的\n${cnNumber(pending)}件事';
+    return '今天要做的\n${_countLabel(pending)}件事';
   }
+
+  /// 量词前用「两」比「二」顺口；周次之类的序数仍走 [cnNumber]。
+  String _countLabel(int n) => n == 2 ? '两' : cnNumber(n);
 }
 
 /// 「已完成 X 件 · 还有 Y 件」+ 右侧进度点。

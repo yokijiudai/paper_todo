@@ -128,6 +128,20 @@ void main() {
       await controller.remove(note.id);
       expect(controller.all, isEmpty);
     });
+
+    test('restore 把删掉的便签原样放回，重复放回不叠加', () async {
+      final note = await controller.add(content: '寄一张明信片');
+      await controller.remove(note.id);
+      expect(controller.all, isEmpty);
+
+      controller.restore(note);
+      expect(controller.all.single.id, note.id);
+      expect(controller.all.single.createdAt, note.createdAt);
+      expect(controller.all.single.content, '寄一张明信片');
+
+      controller.restore(note);
+      expect(controller.all, hasLength(1));
+    });
   });
 
   group('派生统计', () {

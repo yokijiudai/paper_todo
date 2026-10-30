@@ -4,7 +4,8 @@ import '../theme/tokens.dart';
 
 /// 纸面脚手架：暖色底 + 纸纹 + 系统栏配色，所有页面都从这里起。
 ///
-/// 底部栏走 `Scaffold.bottomNavigationBar`，因此键盘弹起时不会盖住输入框；
+/// [bottomBar] 走 `Scaffold.bottomNavigationBar`，适合标签栏这种恒定在底部的栏；
+/// 带输入框的页面要把操作栏放进 [body] 的 Column 末尾，键盘弹起时才会跟着抬起。
 /// 内容区不需要自己再让出手势条。
 class PaperScaffold extends StatelessWidget {
   const PaperScaffold({

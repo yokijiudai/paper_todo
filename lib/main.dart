@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'data/seed_data.dart';
 import 'data/todo_store.dart';
+import 'models/todo_note.dart';
 import 'screens/note_form_page.dart';
 import 'screens/root_shell.dart';
 import 'state/todo_controller.dart';
@@ -76,7 +77,10 @@ class _TodoAppState extends State<TodoApp> with WidgetsBindingObserver {
         initialRoute: RootShell.routeName,
         onGenerateRoute: (settings) {
           if (settings.name == NoteFormPage.routeName) {
-            return _slideUpRoute(const NoteFormPage(), settings);
+            // arguments 里带了 TodoNote 就是编辑，没带就是新建。
+            final argument = settings.arguments;
+            final note = argument is TodoNote ? argument : null;
+            return _slideUpRoute(NoteFormPage(note: note), settings);
           }
           return MaterialPageRoute<void>(
             builder: (_) => const RootShell(),
