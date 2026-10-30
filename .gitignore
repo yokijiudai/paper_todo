@@ -49,3 +49,6 @@ app.*.map.json
 
 # Local learning notes
 /learn/
+
+# Local diagram drafts (archify)
+/.archify/
