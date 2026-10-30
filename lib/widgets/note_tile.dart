@@ -24,8 +24,8 @@ class NoteTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final done = note.isCompleted;
-    final timeLabel = note.timeLabel?.trim() ?? '';
-    final hasTime = timeLabel.isNotEmpty;
+    final estimate = note.estimateLabel?.trim() ?? '';
+    final hasEstimate = estimate.isNotEmpty;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -77,7 +77,7 @@ class NoteTile extends StatelessWidget {
                           runSpacing: 4,
                           children: [
                             CategoryChip(category: note.category),
-                            if (hasTime)
+                            if (hasEstimate)
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -93,7 +93,7 @@ class NoteTile extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    timeLabel,
+                                    estimate,
                                     maxLines: 1,
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: AppColors.muted,

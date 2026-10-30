@@ -12,7 +12,7 @@ void main() {
     id: 'm3k9x2a1',
     content: '写完 Q4 提案的提纲',
     category: category,
-    timeLabel: '傍晚',
+    estimateLabel: '30 分钟',
     createdAt: createdAt,
     completedAt: completed,
   );
@@ -28,7 +28,7 @@ void main() {
       expect(back.id, note.id);
       expect(back.content, note.content);
       expect(back.category, TodoCategory.study);
-      expect(back.timeLabel, '傍晚');
+      expect(back.estimateLabel, '30 分钟');
       expect(back.createdAt, createdAt);
       expect(back.completedAt, completedAt);
     });
@@ -58,6 +58,17 @@ void main() {
       expect(undone.completedAt, isNull);
       expect(undone.isCompleted, isFalse);
       expect(undone.content, done.content);
+    });
+
+    test('toJson 用新键 estimate，旧的 timeLabel 仍能读', () {
+      final note = makeNote();
+      expect(note.toJson()['estimate'], '30 分钟');
+      expect(note.toJson().containsKey('timeLabel'), isFalse);
+
+      final legacy = note.toJson()
+        ..remove('estimate')
+        ..['timeLabel'] = '14:00';
+      expect(TodoNote.fromJson(legacy).estimateLabel, '14:00');
     });
 
     test('缺 content 抛 FormatException（由存储层跳过这一条）', () {

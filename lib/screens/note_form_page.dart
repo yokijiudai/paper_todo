@@ -7,7 +7,7 @@ import 'package:node/widgets/paper_scaffold.dart';
 
 /// 新建 / 编辑待办（同一页，传 [note] 即编辑）。
 ///
-/// 表单只收集「内容、分类、时间」三样；id、创建时间、完成时间都沿用原值，
+/// 表单只收集「内容、分类、预计花费」三样；id、创建时间、完成时间都沿用原值，
 /// 所以编辑一条已完成的事不会把它变回未完成。
 class NoteFormPage extends StatefulWidget {
   const NoteFormPage({super.key, this.note});
@@ -24,19 +24,25 @@ class NoteFormPage extends StatefulWidget {
 }
 
 class _NoteFormPageState extends State<NoteFormPage> {
-  /// 时间不是自由文本：给几个常用档位，点一下就行。
-  static const _timeOptions = <String>['上午', '下午', '傍晚', '睡前'];
+  /// 预计花费不是自由文本：给几个常用档位，点一下就行。
+  static const _estimateOptions = <String>[
+    '15 分钟',
+    '30 分钟',
+    '1 小时',
+    '2 小时',
+    '半天',
+  ];
 
   late final TextEditingController _content;
   late TodoCategory _category;
-  String? _time;
+  String? _estimate;
 
   @override
   void initState() {
     super.initState();
     _content = TextEditingController(text: widget.note?.content ?? '');
     _category = widget.note?.category ?? TodoCategory.work;
-    _time = widget.note?.timeLabel;
+    _estimate = widget.note?.estimateLabel;
   }
 
   @override
@@ -56,14 +62,18 @@ class _NoteFormPageState extends State<NoteFormPage> {
     final controller = TodoScope.of(context);
     final old = widget.note;
     if (old == null) {
-      controller.add(content: text, category: _category, timeLabel: _time);
+      controller.add(
+        content: text,
+        category: _category,
+        estimateLabel: _estimate,
+      );
     } else {
       controller.update(
         TodoNote(
           id: old.id,
           content: text,
           category: _category,
-          timeLabel: _time,
+          estimateLabel: _estimate,
           createdAt: old.createdAt,
           completedAt: old.completedAt,
         ),
@@ -199,7 +209,7 @@ class _NoteFormPageState extends State<NoteFormPage> {
                   ],
                 ),
                 const SizedBox(height: AppSpace.s5),
-                const _FieldLabel('时间（可选）'),
+                const _FieldLabel('预计花费（可选）'),
                 const SizedBox(height: AppSpace.s3),
                 Wrap(
                   spacing: 10,
@@ -207,14 +217,16 @@ class _NoteFormPageState extends State<NoteFormPage> {
                   children: [
                     _ChoicePill(
                       label: '不设置',
-                      selected: _time == null,
-                      onTap: () => setState(() => _time = null),
+                      selected: _estimate == null,
+                      onTap: () => setState(() => _estimate = null),
                     ),
-                    for (final time in _timeOptionsFor(widget.note?.timeLabel))
+                    for (final estimate in _estimateOptionsFor(
+                      widget.note?.estimateLabel,
+                    ))
                       _ChoicePill(
-                        label: time,
-                        selected: _time == time,
-                        onTap: () => setState(() => _time = time),
+                        label: estimate,
+                        selected: _estimate == estimate,
+                        onTap: () => setState(() => _estimate = estimate),
                       ),
                   ],
                 ),
@@ -229,13 +241,13 @@ class _NoteFormPageState extends State<NoteFormPage> {
     );
   }
 
-  /// 原型里时间有「14:00」这类旧值：编辑时把它也做成一个可点的档位，
-  /// 否则打开编辑页会看到一个没有选中任何项的时间行。
-  List<String> _timeOptionsFor(String? current) {
-    if (current == null || _timeOptions.contains(current)) {
-      return _timeOptions;
+  /// 旧数据可能存着「14:00」这类原来的时间文案：编辑时把它补成一个可点的档位，
+  /// 否则打开编辑页会看到一个没有选中任何项的预计花费行。
+  List<String> _estimateOptionsFor(String? current) {
+    if (current == null || _estimateOptions.contains(current)) {
+      return _estimateOptions;
     }
-    return [current, ..._timeOptions];
+    return [current, ..._estimateOptions];
   }
 }
 

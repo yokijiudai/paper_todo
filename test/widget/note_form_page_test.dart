@@ -37,7 +37,7 @@ TodoNote _editableNote() => TodoNote(
   id: 'edit-1',
   content: '旧内容：给琴叶榕换盆',
   category: TodoCategory.work,
-  timeLabel: '14:00',
+  estimateLabel: '1 小时',
   createdAt: DateTime(2026, 10, 30, 8, 40),
 );
 
@@ -52,7 +52,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '买一束花回家');
     await tester.tap(find.text('生活'));
     await tester.pump();
-    await tester.tap(find.text('傍晚'));
+    await tester.tap(find.text('30 分钟'));
     await tester.pump();
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
@@ -60,7 +60,7 @@ void main() {
     final note = controller.all.single;
     expect(note.content, '买一束花回家');
     expect(note.category, TodoCategory.life);
-    expect(note.timeLabel, '傍晚');
+    expect(note.estimateLabel, '30 分钟');
     expect(find.text('买一束花回家'), findsOneWidget);
     expect(find.text('今天要做的\n一件事'), findsOneWidget);
   });
@@ -87,7 +87,7 @@ void main() {
     expect(find.text('编辑这条待办'), findsOneWidget);
     expect(find.text('删除'), findsOneWidget);
     // 旧的时间标签会被补成一个可点的档位。
-    expect(find.text('14:00'), findsOneWidget);
+    expect(find.text('1 小时'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), '新内容：换一个更大的盆');
     await tester.tap(find.text('生活'));
@@ -98,7 +98,7 @@ void main() {
     final updated = controller.all.single;
     expect(updated.content, '新内容：换一个更大的盆');
     expect(updated.category, TodoCategory.life);
-    expect(updated.timeLabel, '14:00');
+    expect(updated.estimateLabel, '1 小时');
     expect(updated.completedAt, doneNote.completedAt, reason: '编辑不该改完成时间');
     expect(find.text('新内容：换一个更大的盆'), findsOneWidget);
   });

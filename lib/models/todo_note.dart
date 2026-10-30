@@ -28,7 +28,7 @@ class TodoNote {
     required this.content,
     required this.createdAt,
     this.category = TodoCategory.work,
-    this.timeLabel,
+    this.estimateLabel,
     this.completedAt,
   });
 
@@ -36,8 +36,10 @@ class TodoNote {
   final String content;
   final TodoCategory category;
 
-  /// 用户填的原始时间文案（"14:00" / "傍晚" / "睡前"），只展示、不解析。
-  final String? timeLabel;
+  /// 预计花费的时间文案（"15 分钟" / "1 小时" / "半天"），只展示、不解析。
+  ///
+  /// 前身是「几点做」（"14:00" / "傍晚"），旧数据仍能从 `timeLabel` 读进来。
+  final String? estimateLabel;
   final DateTime createdAt;
 
   /// 完成时间；`null` 表示未完成。
@@ -52,7 +54,7 @@ class TodoNote {
   TodoNote copyWith({
     String? content,
     TodoCategory? category,
-    String? timeLabel,
+    String? estimateLabel,
     DateTime? completedAt,
     bool clearCompletedAt = false,
   }) {
@@ -65,7 +67,7 @@ class TodoNote {
       content: content ?? this.content,
       createdAt: createdAt,
       category: category ?? this.category,
-      timeLabel: timeLabel ?? this.timeLabel,
+      estimateLabel: estimateLabel ?? this.estimateLabel,
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
     );
   }
@@ -74,7 +76,7 @@ class TodoNote {
     'id': id,
     'content': content,
     'category': category.name,
-    'timeLabel': timeLabel,
+    'estimate': estimateLabel,
     'createdAt': createdAt.toIso8601String(),
     'completedAt': completedAt?.toIso8601String(),
   };
@@ -92,7 +94,8 @@ class TodoNote {
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
       category: TodoCategory.fromName(json['category']),
-      timeLabel: json['timeLabel'] as String?,
+      // 旧版本把「预计花费」存成 timeLabel（当时含义是几点做），读的时候兼容一下。
+      estimateLabel: (json['estimate'] ?? json['timeLabel']) as String?,
       completedAt: DateTime.tryParse(json['completedAt'] as String? ?? ''),
     );
   }

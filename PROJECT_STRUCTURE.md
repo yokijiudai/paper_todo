@@ -45,7 +45,7 @@ node/
 │  ├─ state/
 │  │  └─ todo_controller.dart      TodoController + TodoScope（InheritedNotifier）
 │  ├─ utils/
-│  │  └─ formatters.dart           日期 / 周次 / 中文数字 / 时间标签格式化
+│  │  └─ formatters.dart           日期 / 周次 / 中文数字 / 预计花费文案
 │  ├─ screens/
 │  │  ├─ root_shell.dart           IndexedStack + DiyTabBar（今天 / 新建 / 回顾）
 │  │  ├─ home_page.dart            今天：标题、进度、未完成、今天已完成
@@ -166,20 +166,20 @@ class TodoNote {
     required this.content,
     required this.createdAt,
     this.category = TodoCategory.work,
-    this.timeLabel,
+    this.estimateLabel,
     this.completedAt,
   });
 
   final String id;
   final String content;
   final TodoCategory category;
-  final String? timeLabel;     // "14:00" / "傍晚" / "睡前"，纯展示
+  final String? estimateLabel; // "15 分钟" / "1 小时" / "半天"，预计花费，纯展示
   final DateTime createdAt;
   final DateTime? completedAt; // null = 未完成
 
   bool get isCompleted => completedAt != null;
 
-  TodoNote copyWith({String? content, TodoCategory? category, String? timeLabel,
+  TodoNote copyWith({String? content, TodoCategory? category, String? estimateLabel,
                      DateTime? completedAt, bool clearCompletedAt = false});
   Map<String, Object?> toJson();
   factory TodoNote.fromJson(Map<String, Object?> json);
@@ -266,7 +266,7 @@ class TodoController extends ChangeNotifier {
   int streakDays([DateTime? today]);          // 连续完成天数
 
   Future<void> load();
-  Future<TodoNote> add({required String content, TodoCategory category = TodoCategory.work, String? timeLabel});
+  Future<TodoNote> add({required String content, TodoCategory category = TodoCategory.work, String? estimateLabel});
   Future<void> update(TodoNote note);
   Future<void> toggle(String id);
   Future<void> remove(String id);
@@ -370,7 +370,7 @@ class NoteFormPage extends StatefulWidget {
 
 - `PaperScaffold(body: ListView(...), bottomBar: _ActionBar)`。
 - 顶部自定义 nav：左关闭（`Icons.close_rounded`），编辑态右侧「删除」（`danger`，二次确认后 pop 并删除，带 SnackBar「已删除 · 撤销」）。
-- 表单：`TextField`（6 行、`maxLength` 不设、`textInputAction: newline`）、分类药丸 4 个、**时间（可选）药丸**：不设置 / 上午 / 下午 / 傍晚 / 睡前（原型缺口，见 §12）。
+- 表单：`TextField`（6 行、`maxLength` 不设、`textInputAction: newline`）、分类药丸 4 个、**预计花费（可选）药丸**：不设置 / 15 分钟 / 30 分钟 / 1 小时 / 2 小时 / 半天。
 - 保存：内容空则按钮禁用（灰 `surface2`）；保存后 `pop`。键盘弹出时保存栏跟键盘走（`Scaffold.resizeToAvoidBottomInset: true` 默认即可）。
 
 **`stats_page.dart`**
@@ -431,7 +431,7 @@ class TodoApp extends StatelessWidget {
       "id": "m3k9x2a1",
       "content": "周五前把提案终稿发给 Amanda",
       "category": "work",
-      "timeLabel": "14:00",
+      "estimate": "30 分钟",
       "createdAt": "2026-10-30T09:12:00.000",
       "completedAt": null
     }
@@ -559,7 +559,7 @@ flutter:
 
 ## 12. 原型里的缺口（落地时必须补）
 
-1. **时间没有输入口**：首页会显示 `14:00 / 傍晚 / 睡前`，但 add/detail 只有「做什么 + 分类」。→ 表单加「时间（可选）」一行药丸，`timeLabel` 存原文。
+1. **预计花费没有输入口**：首页 meta 行会显示 `14:00 / 傍晚`，但 add/detail 只有「做什么 + 分类」。→ 已补：表单加「预计花费（可选）」药丸（15 分钟 / 30 分钟 / 1 小时 / 2 小时 / 半天），`estimateLabel` 存原文；旧数据里的 `timeLabel` 兼容读取。
 2. **「灵感」没有 chip 配色**：原型首页只出现工作/生活/学习。→ 用沙色底 + 墨色字（对比度 ≈9.8:1）。
 3. **日历首日偏移是写死的**：`firstIndex()` 对 2026 年 10 月返回 6，只为让 10.23–10.29 占满一行。→ 一律用真实 `DateTime.weekday`，周一开头。
 4. **状态栏和灵动岛是画上去的**（9:41、信号、电量）。→ 用系统状态栏 + `SafeArea` + 深色图标，不再画假图标。

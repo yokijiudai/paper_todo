@@ -22,7 +22,7 @@ void main() {
     id: 'm3k9x2a1',
     content: '周五前把提案终稿发给 Amanda',
     category: TodoCategory.study,
-    timeLabel: '傍晚',
+    estimateLabel: '30 分钟',
     createdAt: DateTime(2026, 10, 30, 9, 12),
     completedAt: DateTime(2026, 10, 30, 10, 30),
   );
@@ -36,7 +36,7 @@ void main() {
     expect(loaded.single.id, note.id);
     expect(loaded.single.content, note.content);
     expect(loaded.single.category, TodoCategory.study);
-    expect(loaded.single.timeLabel, '傍晚');
+    expect(loaded.single.estimateLabel, '30 分钟');
     expect(loaded.single.createdAt, note.createdAt);
     expect(loaded.single.completedAt, note.completedAt);
   });

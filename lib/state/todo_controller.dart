@@ -105,7 +105,7 @@ class TodoController extends ChangeNotifier {
   Future<TodoNote> add({
     required String content,
     TodoCategory category = TodoCategory.work,
-    String? timeLabel,
+    String? estimateLabel,
   }) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty) {
@@ -115,7 +115,7 @@ class TodoController extends ChangeNotifier {
       id: _newId(),
       content: trimmed,
       category: category,
-      timeLabel: timeLabel,
+      estimateLabel: estimateLabel,
       createdAt: _now(),
     );
     _notes.insert(0, note);

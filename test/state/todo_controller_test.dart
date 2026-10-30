@@ -24,12 +24,12 @@ void main() {
     DateTime? completedAt,
     String content = '一件事',
     TodoCategory category = TodoCategory.work,
-    String? timeLabel,
+    String? estimateLabel,
   }) => TodoNote(
     id: 'seed${seq++}',
     content: content,
     category: category,
-    timeLabel: timeLabel,
+    estimateLabel: estimateLabel,
     createdAt: createdAt ?? DateTime(2026, 10, 25, 8),
     completedAt: completedAt,
   );
@@ -55,7 +55,7 @@ void main() {
       final a = await controller.add(
         content: '  写 Q4 提案提纲  ',
         category: TodoCategory.study,
-        timeLabel: '14:00',
+        estimateLabel: '1 小时',
       );
       current = current.add(const Duration(minutes: 1));
       final b = await controller.add(
@@ -65,7 +65,7 @@ void main() {
 
       expect(a.content, '写 Q4 提案提纲');
       expect(a.category, TodoCategory.study);
-      expect(a.timeLabel, '14:00');
+      expect(a.estimateLabel, '1 小时');
       expect(controller.pending.map((n) => n.id), [b.id, a.id]);
       expect(controller.todayTotal, 2);
 
@@ -109,14 +109,14 @@ void main() {
         note.copyWith(
           content: '终稿',
           category: TodoCategory.idea,
-          timeLabel: '睡前',
+          estimateLabel: '2 小时',
         ),
       );
 
       final updated = controller.all.single;
       expect(updated.content, '终稿');
       expect(updated.category, TodoCategory.idea);
-      expect(updated.timeLabel, '睡前');
+      expect(updated.estimateLabel, '2 小时');
       expect(updated.createdAt, note.createdAt);
     });
 
