@@ -19,18 +19,19 @@ TARGET = ROOT / "docs" / "screenshots"
 WIDTH = 600
 
 SHOTS = {
-    # 展示用
-    "release-home.png": "home.jpg",
-    "release-stats.png": "stats.jpg",
-    "release-week-sheet.png": "week-sheet.jpg",
-    "release-form.png": "form.jpg",
+    # 展示用（readme-* 是当前四格底栏那一版）
+    "readme-home.png": "home.jpg",
+    "readme-later.png": "later.jpg",
+    "readme-stats.png": "stats.jpg",
+    "readme-week-sheet.png": "week-sheet.jpg",
+    "form-bucket.png": "form.jpg",
     "form-edit.png": "form-edit.jpg",
     "delete-dialog.png": "delete-dialog.jpg",
     # 验收用：冷启动、字号 1.3 倍
-    "cold2.png": "acceptance-cold-start.jpg",
-    "scale-1.3.png": "acceptance-scale-home.jpg",
-    "scale-1.3-stats.png": "acceptance-scale-stats.jpg",
-    "scale-1.3-form.png": "acceptance-scale-form.jpg",
+    "readme-cold.png": "acceptance-cold-start.jpg",
+    "readme-scale-home.png": "acceptance-scale-home.jpg",
+    "readme-scale-stats.png": "acceptance-scale-stats.jpg",
+    "readme-scale-form.png": "acceptance-scale-form.jpg",
 }
 
 

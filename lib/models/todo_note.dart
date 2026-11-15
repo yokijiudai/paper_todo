@@ -17,6 +17,23 @@ enum TodoCategory {
       values.firstWhere((e) => e.name == name, orElse: () => work);
 }
 
+/// 待办所在的栏位：今天要做的，还是先放着。
+///
+/// 「以后」不是完成状态，只是暂时不安排在今天的清单；挪到今天仍是一条未完成待办。
+enum TodoBucket {
+  today('今天'),
+  later('以后');
+
+  const TodoBucket(this.label);
+
+  /// 展示用中文名。
+  final String label;
+
+  /// 从 JSON 还原；旧数据没有这个字段，一律算「今天」，不会把已有待办藏起来。
+  static TodoBucket fromName(Object? name) =>
+      values.firstWhere((e) => e.name == name, orElse: () => today);
+}
+
 /// 一条待办。
 ///
 /// 不可变：任何修改都走 [copyWith] 或 controller，页面不直接赋值。
@@ -30,6 +47,8 @@ class TodoNote {
     this.category = TodoCategory.work,
     this.estimateLabel,
     this.completedAt,
+    this.bucket = TodoBucket.today,
+    this.placedAt,
   });
 
   final String id;
@@ -45,7 +64,19 @@ class TodoNote {
   /// 完成时间；`null` 表示未完成。
   final DateTime? completedAt;
 
+  /// 这条待在「今天」还是「以后」。
+  final TodoBucket bucket;
+
+  /// 进入当前栏位的时间：新建、从「以后」挪到今天时写入。
+  ///
+  /// 「以后」页按 [createdAt] 排序（想到得越晚越靠上），「今天」页按这个排，
+  /// 刚挪过来的事因此会出现在最前面。旧数据没有这个字段，回落到 [createdAt]。
+  final DateTime? placedAt;
+
   bool get isCompleted => completedAt != null;
+
+  /// 排序用的「放进本栏时间」。
+  DateTime get placedOn => placedAt ?? createdAt;
 
   /// 复制并修改字段。
   ///
@@ -57,6 +88,8 @@ class TodoNote {
     String? estimateLabel,
     DateTime? completedAt,
     bool clearCompletedAt = false,
+    TodoBucket? bucket,
+    DateTime? placedAt,
   }) {
     assert(
       !(clearCompletedAt && completedAt != null),
@@ -69,6 +102,8 @@ class TodoNote {
       category: category ?? this.category,
       estimateLabel: estimateLabel ?? this.estimateLabel,
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
+      bucket: bucket ?? this.bucket,
+      placedAt: placedAt ?? this.placedAt,
     );
   }
 
@@ -79,6 +114,8 @@ class TodoNote {
     'estimate': estimateLabel,
     'createdAt': createdAt.toIso8601String(),
     'completedAt': completedAt?.toIso8601String(),
+    'bucket': bucket.name,
+    'placedAt': placedAt?.toIso8601String(),
   };
 
   /// 解析失败（content 缺失）抛 [FormatException]，由存储层跳过这一条。
@@ -97,11 +134,14 @@ class TodoNote {
       // 旧版本把「预计花费」存成 timeLabel（当时含义是几点做），读的时候兼容一下。
       estimateLabel: (json['estimate'] ?? json['timeLabel']) as String?,
       completedAt: DateTime.tryParse(json['completedAt'] as String? ?? ''),
+      // 没有 bucket 的老数据算「今天」，不会被新加的「以后」页藏掉。
+      bucket: TodoBucket.fromName(json['bucket']),
+      placedAt: DateTime.tryParse(json['placedAt'] as String? ?? ''),
     );
   }
 
   @override
   String toString() =>
-      'TodoNote($id, ${category.name}, $content'
+      'TodoNote($id, ${category.name}, ${bucket.name}, $content'
       '${isCompleted ? ', completedAt: $completedAt' : ''})';
 }

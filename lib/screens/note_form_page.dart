@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:paper_todo/models/todo_note.dart';
 import 'package:paper_todo/state/todo_controller.dart';
 import 'package:paper_todo/theme/tokens.dart';
+import 'package:paper_todo/widgets/choice_pill.dart';
 import 'package:paper_todo/widgets/paper_scaffold.dart';
+import 'package:paper_todo/widgets/primary_button.dart';
 
 /// 新建 / 编辑待办（同一页，传 [note] 即编辑）。
 ///
-/// 表单只收集「内容、分类、预计花费」三样；id、创建时间、完成时间都沿用原值，
-/// 所以编辑一条已完成的事不会把它变回未完成。
+/// 表单只收集「内容、分类、预计花费、放在今天还是以后」；id、创建时间、
+/// 完成时间都沿用原值，所以编辑一条已完成的事不会把它变回未完成。
 class NoteFormPage extends StatefulWidget {
   const NoteFormPage({super.key, this.note});
 
@@ -35,6 +37,7 @@ class _NoteFormPageState extends State<NoteFormPage> {
 
   late final TextEditingController _content;
   late TodoCategory _category;
+  late TodoBucket _bucket;
   String? _estimate;
 
   @override
@@ -42,6 +45,7 @@ class _NoteFormPageState extends State<NoteFormPage> {
     super.initState();
     _content = TextEditingController(text: widget.note?.content ?? '');
     _category = widget.note?.category ?? TodoCategory.work;
+    _bucket = widget.note?.bucket ?? TodoBucket.today;
     _estimate = widget.note?.estimateLabel;
   }
 
@@ -66,6 +70,7 @@ class _NoteFormPageState extends State<NoteFormPage> {
         content: text,
         category: _category,
         estimateLabel: _estimate,
+        bucket: _bucket,
       );
     } else {
       controller.update(
@@ -76,6 +81,8 @@ class _NoteFormPageState extends State<NoteFormPage> {
           estimateLabel: _estimate,
           createdAt: old.createdAt,
           completedAt: old.completedAt,
+          bucket: _bucket,
+          placedAt: old.placedAt,
         ),
       );
     }
@@ -201,7 +208,7 @@ class _NoteFormPageState extends State<NoteFormPage> {
                   runSpacing: 10,
                   children: [
                     for (final category in TodoCategory.values)
-                      _ChoicePill(
+                      ChoicePill(
                         label: category.label,
                         selected: _category == category,
                         onTap: () => setState(() => _category = category),
@@ -215,7 +222,7 @@ class _NoteFormPageState extends State<NoteFormPage> {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    _ChoicePill(
+                    ChoicePill(
                       label: '不设置',
                       selected: _estimate == null,
                       onTap: () => setState(() => _estimate = null),
@@ -223,10 +230,25 @@ class _NoteFormPageState extends State<NoteFormPage> {
                     for (final estimate in _estimateOptionsFor(
                       widget.note?.estimateLabel,
                     ))
-                      _ChoicePill(
+                      ChoicePill(
                         label: estimate,
                         selected: _estimate == estimate,
                         onTap: () => setState(() => _estimate = estimate),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.s5),
+                const _FieldLabel('放在哪里'),
+                const SizedBox(height: AppSpace.s3),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final bucket in TodoBucket.values)
+                      ChoicePill(
+                        label: bucket.label,
+                        selected: _bucket == bucket,
+                        onTap: () => setState(() => _bucket = bucket),
                       ),
                   ],
                 ),
@@ -312,58 +334,6 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-/// 44 高的胶囊，选中的用主色实底，没选中的是纸面加细边。
-class _ChoicePill extends StatelessWidget {
-  const _ChoicePill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final shape = StadiumBorder(
-      side: BorderSide(color: selected ? AppColors.primary : AppColors.line),
-    );
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: Material(
-        color: selected ? AppColors.primary : AppColors.surface,
-        shape: shape,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: shape,
-          child: Container(
-            height: AppSize.tap,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.s4),
-            // widthFactor 让胶囊贴着文字收缩；否则 Center 会吃满 Wrap 给的宽度。
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: AppText.sm,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? AppColors.primaryInk : AppColors.text,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// 底部保存栏：内容为空时按钮变浅、点不动。
 class _SaveBar extends StatelessWidget {
   const _SaveBar({required this.enabled, required this.onSave});
@@ -373,7 +343,6 @@ class _SaveBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppRadius.md);
     // 键盘弹起时 Scaffold 会缩 body，但 MediaQuery 的底部安全区还在；
     // 这时不再补手势条高度，否则保存栏和键盘之间会空一条。
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
@@ -394,33 +363,7 @@ class _SaveBar extends StatelessWidget {
             AppSize.pageX,
             AppSpace.s3,
           ),
-          child: SizedBox(
-            height: 52,
-            child: Material(
-              color: enabled
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.34),
-              borderRadius: radius,
-              elevation: enabled ? 6 : 0,
-              shadowColor: AppColors.alpha(AppColors.primary, 0.35),
-              child: InkWell(
-                onTap: enabled ? onSave : null,
-                borderRadius: radius,
-                child: Center(
-                  child: Text(
-                    '保存',
-                    style: TextStyle(
-                      fontSize: AppText.md,
-                      fontWeight: FontWeight.w600,
-                      color: enabled
-                          ? AppColors.primaryInk
-                          : AppColors.primaryInk.withValues(alpha: 0.75),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          child: PrimaryButton(label: '保存', onPressed: enabled ? onSave : null),
         ),
       ),
     );

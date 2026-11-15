@@ -26,6 +26,10 @@ class TodoController extends ChangeNotifier {
   final DateTime Function() _now;
 
   final List<TodoNote> _notes = [];
+
+  /// id 的递增后缀：同一微秒里连加两条也不会撞 id（测试里时钟是固定的）。
+  int _idSeq = 0;
+
   Timer? _saveTimer;
   bool _dirty = false;
   bool _isLoading = true;
@@ -39,12 +43,21 @@ class TodoController extends ChangeNotifier {
   /// 当前时间。和「今天」「本周」用的是同一个时钟，页面取默认周时用它。
   DateTime get now => _now();
 
-  /// 全部待办，按创建时间倒序（最新的在最前）。
+  /// 全部待办（内部顺序：新加的插在最前；展示顺序由各派生列表负责）。
   List<TodoNote> get all => List.unmodifiable(_notes);
 
-  /// 未完成，创建时间倒序。
+  /// 今天还没做的，放进本栏的时间倒序（刚挪过来的排最前）。
   List<TodoNote> get pending =>
-      _notes.where((n) => !n.isCompleted).toList()
+      _notes
+          .where((n) => !n.isCompleted && n.bucket == TodoBucket.today)
+          .toList()
+        ..sort((a, b) => b.placedOn.compareTo(a.placedOn));
+
+  /// 「以后」放着还没做的，想到得越晚越靠上。
+  List<TodoNote> get later =>
+      _notes
+          .where((n) => !n.isCompleted && n.bucket == TodoBucket.later)
+          .toList()
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   /// 今天完成，完成时间倒序。
@@ -104,22 +117,28 @@ class TodoController extends ChangeNotifier {
 
   /// 新建一条，插到最前面（创建时间最新）。
   ///
-  /// 内容为空抛 [ArgumentError]，由页面先拦一道。
+  /// 内容为空抛 [ArgumentError]，由页面先拦一道。[bucket] 决定它进「今天」还是「以后」。
   Future<TodoNote> add({
     required String content,
     TodoCategory category = TodoCategory.work,
     String? estimateLabel,
+    TodoBucket bucket = TodoBucket.today,
   }) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty) {
       throw ArgumentError.value(content, 'content', '内容不能为空');
     }
+    final now = _now();
     final note = TodoNote(
-      id: _newId(),
+      id:
+          '${now.microsecondsSinceEpoch.toRadixString(36)}'
+          '${(_idSeq++).toRadixString(36)}',
       content: trimmed,
       category: category,
       estimateLabel: estimateLabel,
-      createdAt: _now(),
+      createdAt: now,
+      bucket: bucket,
+      placedAt: now,
     );
     _notes.insert(0, note);
     notifyListeners();
@@ -128,10 +147,41 @@ class TodoController extends ChangeNotifier {
   }
 
   /// 整体替换一条（编辑页把改好的 note 传回来）。
+  ///
+  /// 创建时间以原来那条为准；改到另一个栏位时，[TodoNote.placedAt] 记成现在，
+  /// 让它出现在新栏位的顶部。
   Future<void> update(TodoNote note) async {
     final index = _notes.indexWhere((n) => n.id == note.id);
     if (index < 0) return;
-    _notes[index] = note;
+    final old = _notes[index];
+    _notes[index] = TodoNote(
+      id: note.id,
+      content: note.content,
+      category: note.category,
+      estimateLabel: note.estimateLabel,
+      createdAt: old.createdAt,
+      completedAt: note.completedAt,
+      bucket: note.bucket,
+      placedAt: note.bucket == old.bucket
+          ? (note.placedAt ?? old.placedAt)
+          : _now(),
+    );
+    notifyListeners();
+    _persist();
+  }
+
+  /// 把一条从「以后」挪到今天；已经在今天则什么也不做。
+  Future<void> moveToToday(String id) => _moveTo(id, TodoBucket.today);
+
+  /// 把一条放回「以后」（挪错时撤销、编辑页里改成以后）。
+  Future<void> moveToLater(String id) => _moveTo(id, TodoBucket.later);
+
+  Future<void> _moveTo(String id, TodoBucket bucket) async {
+    final index = _notes.indexWhere((n) => n.id == id);
+    if (index < 0) return;
+    final note = _notes[index];
+    if (note.bucket == bucket) return;
+    _notes[index] = note.copyWith(bucket: bucket, placedAt: _now());
     notifyListeners();
     _persist();
   }
@@ -191,8 +241,6 @@ class TodoController extends ChangeNotifier {
       );
     });
   }
-
-  String _newId() => _now().microsecondsSinceEpoch.toRadixString(36);
 
   @override
   void dispose() {

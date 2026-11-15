@@ -25,6 +25,8 @@ void main() {
     String content = '一件事',
     TodoCategory category = TodoCategory.work,
     String? estimateLabel,
+    TodoBucket bucket = TodoBucket.today,
+    DateTime? placedAt,
   }) => TodoNote(
     id: 'seed${seq++}',
     content: content,
@@ -32,6 +34,8 @@ void main() {
     estimateLabel: estimateLabel,
     createdAt: createdAt ?? DateTime(2026, 10, 25, 8),
     completedAt: completedAt,
+    bucket: bucket,
+    placedAt: placedAt,
   );
 
   setUp(() {
@@ -141,6 +145,112 @@ void main() {
 
       controller.restore(note);
       expect(controller.all, hasLength(1));
+    });
+  });
+
+  group('今天与以后', () {
+    test('add(bucket: later) 进以后，不算今天的未完成', () async {
+      final later = await controller.add(
+        content: '学做手冲咖啡',
+        category: TodoCategory.life,
+        bucket: TodoBucket.later,
+      );
+      final today = await controller.add(content: '写周报');
+
+      expect(controller.later.single.id, later.id);
+      expect(controller.pending.single.id, today.id);
+      expect(controller.todayTotal, 1);
+
+      await controller.flush();
+      expect(store.notes.map((n) => n.bucket), [
+        TodoBucket.today,
+        TodoBucket.later,
+      ]);
+      expect(
+        store.notes.singleWhere((n) => n.id == later.id).placedAt,
+        current,
+      );
+    });
+
+    test('moveToToday 把以后的事挪到今天，并排在今天最前面', () async {
+      final old = makeNote(
+        content: '两周前想到的',
+        createdAt: DateTime(2026, 10, 16, 20),
+        bucket: TodoBucket.later,
+      );
+      final fresh = makeNote(
+        content: '今天写的',
+        createdAt: DateTime(2026, 10, 30, 8),
+      );
+      final c = controllerWith([old, fresh]);
+      await c.load();
+      expect(c.later.map((n) => n.id), [old.id]);
+      expect(c.pending.map((n) => n.id), [fresh.id]);
+
+      current = DateTime(2026, 10, 30, 9, 30);
+      await c.moveToToday(old.id);
+
+      expect(c.later, isEmpty);
+      // 虽然创建时间比 fresh 早，但刚挪过来，排在前面。
+      expect(c.pending.map((n) => n.id), [old.id, fresh.id]);
+      expect(c.pending.first.placedAt, current);
+
+      await c.flush();
+      expect(c.all.singleWhere((n) => n.id == old.id).bucket, TodoBucket.today);
+    });
+
+    test('moveToLater 把今天的事放回以后，未知 id 不报错', () async {
+      final note = await controller.add(content: '今天先不做了');
+      await controller.moveToLater('不存在的 id');
+      expect(controller.pending, hasLength(1));
+
+      current = current.add(const Duration(minutes: 5));
+      await controller.moveToLater(note.id);
+
+      expect(controller.pending, isEmpty);
+      expect(controller.later.single.id, note.id);
+      expect(controller.later.single.placedAt, current);
+    });
+
+    test('已经在同一栏时 moveTo 不产生改动', () async {
+      final note = await controller.add(content: '就在今天');
+      await controller.flush();
+      expect(store.saveCount, 1);
+
+      await controller.moveToToday(note.id);
+      await controller.flush();
+
+      expect(store.saveCount, 1, reason: '同栏移动不该再写一次盘');
+      expect(controller.pending.single.placedAt, note.placedAt);
+    });
+
+    test('update 换栏位时刷新 placedAt，只改内容则保留', () async {
+      final note = await controller.add(content: '草稿');
+      final placedAt = controller.pending.single.placedAt;
+
+      current = current.add(const Duration(minutes: 10));
+      await controller.update(note.copyWith(content: '终稿'));
+      expect(controller.pending.single.placedAt, placedAt);
+
+      current = current.add(const Duration(minutes: 10));
+      await controller.update(note.copyWith(bucket: TodoBucket.later));
+      expect(controller.pending, isEmpty);
+      expect(controller.later.single.placedAt, current);
+    });
+
+    test('以后按创建时间倒序：想到得越晚越靠上', () async {
+      final a = makeNote(
+        createdAt: DateTime(2026, 10, 20),
+        bucket: TodoBucket.later,
+      );
+      final b = makeNote(
+        createdAt: DateTime(2026, 10, 29),
+        bucket: TodoBucket.later,
+      );
+      final c = controllerWith([a, b]);
+      await c.load();
+
+      expect(c.later.map((n) => n.id), [b.id, a.id]);
     });
   });
 

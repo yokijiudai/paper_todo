@@ -48,6 +48,20 @@ void main() {
     expect(cnNumber(14), '14');
   });
 
+  test('thoughtLabel 按天 / 周 / 月 / 年说「想到多久以前」', () {
+    final now = DateTime(2026, 10, 30, 9);
+    expect(thoughtLabel(DateTime(2026, 10, 30, 8), now), '今天想到');
+    // 设备时钟被改到未来时，不显示负数。
+    expect(thoughtLabel(DateTime(2026, 10, 31), now), '今天想到');
+    expect(thoughtLabel(DateTime(2026, 10, 29, 23), now), '想到 1 天前');
+    expect(thoughtLabel(DateTime(2026, 10, 24), now), '想到 6 天前');
+    expect(thoughtLabel(DateTime(2026, 10, 23), now), '想到 1 周前');
+    expect(thoughtLabel(DateTime(2026, 10, 17), now), '想到 1 周前'); // 13 天
+    expect(thoughtLabel(DateTime(2026, 10, 16), now), '想到 2 周前'); // 14 天
+    expect(thoughtLabel(DateTime(2026, 9, 25), now), '想到 1 个月前'); // 35 天
+    expect(thoughtLabel(DateTime(2025, 10, 1), now), '想到 1 年前');
+  });
+
   test('weekOfMonth / weekKicker 按「周四所在月份」归属', () {
     // 2026-10-01 是周四，9-28 那周算十月第一周；10-01 之后每周递增。
     expect(weekOfMonth(DateTime(2026, 9, 28)), 1);

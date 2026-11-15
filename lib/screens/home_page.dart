@@ -65,7 +65,10 @@ class HomePage extends StatelessWidget {
         const _SectionHeader('未完成'),
         const SizedBox(height: AppSpace.s3),
         if (pending.isEmpty)
-          const _EmptyHint('现在没有待办。', '点下面的 + 写第一条。')
+          // 今天空着但「以后」有东西时，指一下路，别让人以为弄丢了。
+          controller.later.isEmpty
+              ? const _EmptyHint('现在没有待办。', '点下面的 + 写第一条。')
+              : const _EmptyHint('今天没有安排。', '去「以后」翻翻，或点 + 写一条。')
         else
           for (var i = 0; i < pending.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),

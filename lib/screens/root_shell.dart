@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../widgets/diy_tabbar.dart';
 import '../widgets/paper_scaffold.dart';
 import 'home_page.dart';
+import 'later_page.dart';
 import 'note_form_page.dart';
 import 'stats_page.dart';
 
-/// 应用外壳：`IndexedStack` 保住两页状态，标签栏只建一次。
+/// 应用外壳：`IndexedStack` 保住三页状态，标签栏只建一次。
 class RootShell extends StatefulWidget {
   const RootShell({super.key});
 
@@ -39,7 +40,7 @@ class _RootShellState extends State<RootShell> {
       child: PaperScaffold(
         body: IndexedStack(
           index: _index,
-          children: const [HomePage(), StatsPage()],
+          children: const [HomePage(), LaterPage(), StatsPage()],
         ),
         bottomBar: DiyTabBar(
           index: _index,

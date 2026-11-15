@@ -129,6 +129,23 @@ void main() {
     expect(find.text('旧内容：给琴叶榕换盆'), findsOneWidget);
   });
 
+  testWidgets('新建时选「以后」，保存后进以后而不是今天', (tester) async {
+    final controller = await _pumpApp(tester);
+    await _openNewForm(tester);
+
+    await tester.enterText(find.byType(TextField), '学做一次手冲咖啡');
+    await tester.tap(find.text('以后'));
+    await tester.pump();
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(controller.pending, isEmpty);
+    expect(controller.later.single.content, '学做一次手冲咖啡');
+    expect(controller.later.single.bucket, TodoBucket.later);
+    // 回到首页：今天空着，空态指向「以后」。
+    expect(find.text('今天没有安排。'), findsOneWidget);
+  });
+
   testWidgets('取消删除不动数据', (tester) async {
     final controller = await _pumpApp(tester, seed: [_editableNote()]);
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../theme/tokens.dart';
+import 'package:paper_todo/theme/tokens.dart';
 
-/// 底部标签栏：两格 + 中间凸起的「新建」。
+/// 底部标签栏：今天 / 以后 / 回顾 三格，最右边一格上方浮着「新建」圆钮。
 ///
-/// `index`：0 = 今天，1 = 回顾。切页由 [RootShell] 的 `IndexedStack` 负责，
-/// 这里只发信号，不做导航。
+/// `index`：0 = 今天，1 = 以后，2 = 回顾。切页由 [RootShell] 的 `IndexedStack`
+/// 负责，这里只发信号，不做导航。
 ///
-/// 圆钮比栏面高 18，所以整个组件比栏面多留 [AppSize.tabBarLift] 的高度：
+/// 圆钮比栏面高 [AppSize.tabBarLift]，所以整个组件比栏面多留这么多高度：
 /// 按钮因此完整落在自己的命中区内，凸出来的那一截也点得到。
 class DiyTabBar extends StatelessWidget {
   const DiyTabBar({
@@ -26,6 +26,9 @@ class DiyTabBar extends StatelessWidget {
       AppSize.tabBar +
       AppSize.tabBarLift +
       MediaQuery.paddingOf(context).bottom;
+
+  /// 栏面左右留白：浮起的圆钮和栏内格子用同一份，第四格中心才对得上。
+  static const double _sideInset = AppSpace.s4;
 
   @override
   Widget build(BuildContext context) {
@@ -51,29 +54,42 @@ class DiyTabBar extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: bottomInset),
                 child: SizedBox(
                   height: AppSize.tabBar,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: _TabItem(
-                          label: '今天',
-                          icon: Icons.wb_sunny_outlined,
-                          selectedIcon: Icons.wb_sunny_rounded,
-                          selected: index == 0,
-                          onTap: () => onSelect(0),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _sideInset),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _TabItem(
+                            label: '今天',
+                            icon: Icons.checklist_rounded,
+                            selectedIcon: Icons.checklist_rounded,
+                            selected: index == 0,
+                            onTap: () => onSelect(0),
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      Expanded(
-                        child: _TabItem(
-                          label: '回顾',
-                          icon: Icons.bar_chart_outlined,
-                          selectedIcon: Icons.bar_chart_rounded,
-                          selected: index == 1,
-                          onTap: () => onSelect(1),
+                        Expanded(
+                          child: _TabItem(
+                            label: '以后',
+                            icon: Icons.bookmark_border_rounded,
+                            selectedIcon: Icons.bookmark_rounded,
+                            selected: index == 1,
+                            onTap: () => onSelect(1),
+                          ),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: _TabItem(
+                            label: '回顾',
+                            icon: Icons.bar_chart_outlined,
+                            selectedIcon: Icons.bar_chart_rounded,
+                            selected: index == 2,
+                            onTap: () => onSelect(2),
+                          ),
+                        ),
+                        // 第四格只放文字；圆钮由上面的浮层盖在这一格上方。
+                        const Expanded(child: _AddLabel()),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -83,7 +99,17 @@ class DiyTabBar extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            child: Center(child: _AddButton(onTap: onAdd)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _sideInset),
+              child: Row(
+                children: [
+                  for (var i = 0; i < 3; i++) const Expanded(child: SizedBox()),
+                  Expanded(
+                    child: Center(child: _AddButton(onTap: onAdd)),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -127,7 +153,7 @@ class _TabItem extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 letterSpacing: 0.4,
                 color: color,
               ),
@@ -135,6 +161,31 @@ class _TabItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 第四格的文字。上面留出和图标等高的位置，让「新建」与其他标签在同一行。
+class _AddLabel extends StatelessWidget {
+  const _AddLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(height: 20),
+        SizedBox(height: 2),
+        Text(
+          '新建',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.4,
+            color: AppColors.muted,
+          ),
+        ),
+      ],
     );
   }
 }

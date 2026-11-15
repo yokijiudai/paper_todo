@@ -137,6 +137,25 @@ void main() {
     expect(find.text('今天要做的\n两件事'), findsOneWidget);
   });
 
+  testWidgets('「以后」的事不占今天的件数和进度', (tester) async {
+    await _pumpApp(
+      tester,
+      seed: [
+        ..._seedNotes().take(2),
+        TodoNote(
+          id: 'later',
+          content: '学做一次手冲咖啡',
+          category: TodoCategory.life,
+          createdAt: DateTime(2026, 10, 20, 19),
+          bucket: TodoBucket.later,
+        ),
+      ],
+    );
+
+    expect(find.text('今天要做的\n两件事'), findsOneWidget);
+    expect(find.text('学做一次手冲咖啡'), findsNothing);
+  });
+
   testWidgets('底部分段可以切到回顾再切回来', (tester) async {
     await _pumpApp(tester, seed: _seedNotes());
 

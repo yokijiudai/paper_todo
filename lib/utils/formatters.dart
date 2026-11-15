@@ -79,6 +79,19 @@ String weekRange(DateTime weekStart) =>
 /// 1–10 用汉字，其余直接用数字（"五" / "14"）。
 String cnNumber(int n) => (n >= 0 && n <= 10) ? _cnDigits[n] : '$n';
 
+/// 「以后」页每行右侧的那句：这条是多久以前想到的。
+///
+/// 今天想到的不说「0 天前」；一周以上换成周，再长换成月、年。
+/// 未来时间（设备时钟被改过）按今天处理，不显示负数。
+String thoughtLabel(DateTime createdAt, DateTime now) {
+  final days = daysBetween(createdAt, now);
+  if (days <= 0) return '今天想到';
+  if (days < 7) return '想到 $days 天前';
+  if (days < 30) return '想到 ${days ~/ 7} 周前';
+  if (days < 365) return '想到 ${days ~/ 30} 个月前';
+  return '想到 ${days ~/ 365} 年前';
+}
+
 /// 该周归属月份的「第几周」。
 ///
 /// 以「该周周四所在的月份」为准（跨月的周归到占 4 天以上的那一侧），

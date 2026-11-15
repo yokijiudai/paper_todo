@@ -71,6 +71,45 @@ void main() {
       expect(TodoNote.fromJson(legacy).estimateLabel, '14:00');
     });
 
+    test('bucket 与 placedAt 往返保留；旧数据没有 bucket 算今天', () {
+      final later = TodoNote(
+        id: 'l1',
+        content: '学做一次手冲咖啡',
+        createdAt: createdAt,
+        bucket: TodoBucket.later,
+        placedAt: DateTime(2026, 10, 28, 20),
+      );
+      final back = TodoNote.fromJson(later.toJson());
+      expect(back.bucket, TodoBucket.later);
+      expect(back.placedAt, DateTime(2026, 10, 28, 20));
+
+      final legacy = later.toJson()
+        ..remove('bucket')
+        ..remove('placedAt');
+      final old = TodoNote.fromJson(legacy);
+      expect(old.bucket, TodoBucket.today);
+      expect(old.placedAt, isNull);
+      // 没有 placedAt 时按创建时间排队，老数据不会乱序。
+      expect(old.placedOn, old.createdAt);
+    });
+
+    test('未知 bucket 回落今天，不把数据藏进以后', () {
+      final json = makeNote().toJson()..['bucket'] = 'someday';
+      expect(TodoNote.fromJson(json).bucket, TodoBucket.today);
+    });
+
+    test('copyWith 能换栏位，不传则保持原样', () {
+      final note = makeNote();
+      final moved = note.copyWith(
+        bucket: TodoBucket.later,
+        placedAt: DateTime(2026, 10, 30, 11),
+      );
+      expect(moved.bucket, TodoBucket.later);
+      expect(moved.placedAt, DateTime(2026, 10, 30, 11));
+      expect(note.bucket, TodoBucket.today);
+      expect(note.copyWith(content: '改个字').bucket, TodoBucket.today);
+    });
+
     test('缺 content 抛 FormatException（由存储层跳过这一条）', () {
       expect(
         () => TodoNote.fromJson({
