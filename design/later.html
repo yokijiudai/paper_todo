@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="dsh-design" content="app">
+<title>以后 · 待办</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>
+  .someday-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+  .someday-art { width: 100px; height: 84px; margin-bottom: -2px; }
+  .lede {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
+  /* 写一条的纸条 */
+  .slip {
+    position: relative;
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+  }
+  .slip .field-label { font-size: var(--text-xs); }
+  .slip .textarea {
+    margin-top: var(--space-2);
+    min-height: 96px;
+    padding: var(--space-2) 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dashed var(--color-line);
+    border-radius: 0;
+  }
+  .slip .textarea:focus {
+    border-bottom-color: var(--color-primary);
+    box-shadow: none;
+  }
+  .slip .picker { margin-top: var(--space-4); }
+  .slip .btn { margin-top: var(--space-4); }
+
+  /* 每行右侧「挪到今天」 */
+  .todo { padding-right: 6px; }
+  .todo-main {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    flex: 1;
+    min-width: 0;
+  }
+  .move-btn {
+    flex: 0 0 auto;
+    align-self: center;
+    width: var(--tap);
+    height: var(--tap);
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-full);
+    color: var(--color-muted);
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .move-btn:active { background: var(--color-primary-soft); color: var(--color-primary-deep); }
+  .move-btn svg { width: 18px; height: 18px; }
+
+  .foot-note {
+    margin-top: var(--space-5);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header class="status-bar">
+  <span class="status-time">9:41</span>
+  <span class="status-icons" aria-hidden="true">
+    <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7.6" width="3" height="4.4" rx="1"/><rect x="5" y="5.2" width="3" height="6.8" rx="1"/><rect x="10" y="2.6" width="3" height="9.4" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.4 3.9a10 10 0 0 1 13.2 0"/><path d="M4.1 6.9a6 6 0 0 1 7.8 0"/><circle cx="8" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>
+    <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.7" y="0.7" width="21" height="11.6" rx="3.4" stroke="currentColor" stroke-width="1.4" opacity=".45"/><rect x="2.4" y="2.4" width="16" height="8.2" rx="2" fill="currentColor"/><path d="M23.6 4.5v4c1-.3 1.6-1 1.6-2s-.6-1.7-1.6-2Z" fill="currentColor" opacity=".45"/></svg>
+  </span>
+</header>
+
+<main class="page">
+  <p class="kicker">以后 · 先记着</p>
+
+  <div class="someday-head">
+    <h1 class="display">不着急的事，<br>放这里</h1>
+    <svg class="someday-art" viewBox="0 0 104 84" aria-hidden="true">
+      <path d="M4 74c11-4 17-13 27-16" fill="none" stroke="var(--color-muted)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 7" opacity=".7"/>
+      <path d="M96 12 30 46l26 8Z" fill="var(--color-surface)" stroke="var(--color-text)" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M96 12 66 68l-10-14Z" fill="var(--color-sand-soft)" stroke="var(--color-text)" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M38 42 58 52" fill="none" stroke="var(--color-text)" stroke-width="1.2" stroke-linecap="round" opacity=".35"/>
+    </svg>
+  </div>
+
+  <p class="lede">想起什么写一行，哪天有空再挪到今天。</p>
+
+  <section class="card slip" aria-label="记一件以后想做的事">
+    <span class="tape" aria-hidden="true"></span>
+    <label class="field-label" for="later-text">想做的事</label>
+    <textarea class="textarea" id="later-text" rows="3" placeholder="比如：学做一次手冲咖啡"></textarea>
+    <div class="picker" role="group" aria-label="分类">
+      <button class="pill is-on" type="button">生活</button>
+      <button class="pill" type="button">工作</button>
+      <button class="pill" type="button">学习</button>
+      <button class="pill" type="button">灵感</button>
+    </div>
+    <button class="btn btn-primary btn-block" type="button">先记着</button>
+  </section>
+
+  <section class="group" aria-labelledby="group-later">
+    <h2 class="group-label" id="group-later">放着的 7 件</h2>
+    <ul class="todo-list">
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">学做一次手冲咖啡</span>
+            <span class="todo-meta"><span class="chip chip--life">生活</span><span>想到 2 天前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「学做一次手冲咖啡」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">把阳台那面墙刷成米色</span>
+            <span class="todo-meta"><span class="chip chip--life">生活</span><span>想到 5 天前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「把阳台那面墙刷成米色」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">读完《人类简史》</span>
+            <span class="todo-meta"><span class="chip chip--study">学习</span><span>想到 1 周前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「读完《人类简史》」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">给爸妈打个长电话</span>
+            <span class="todo-meta"><span class="chip chip--life">生活</span><span>想到 3 天前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「给爸妈打个长电话」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">试试用 Flutter 写个小工具</span>
+            <span class="todo-meta"><span class="chip">工作</span><span>想到 1 天前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「试试用 Flutter 写个小工具」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">去城南那家旧书店逛逛</span>
+            <span class="todo-meta"><span class="chip chip--life">生活</span><span>想到 2 周前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「去城南那家旧书店逛逛」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+      <li class="todo">
+        <a class="todo-main" href="detail.html">
+          <span class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.6c4.6.1 8.3 3.7 8.3 8.3 0 4.8-3.6 8.5-8.4 8.5-4.7 0-8.2-3.5-8.2-8.3 0-4.7 3.4-8.4 8.3-8.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="todo-body">
+            <span class="todo-title">学一首能完整弹下来的曲子</span>
+            <span class="todo-meta"><span class="chip chip--study">学习</span><span>想到 4 天前</span></span>
+          </span>
+        </a>
+        <a class="move-btn" href="home.html" aria-label="把「学一首能完整弹下来的曲子」挪到今天">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 4.9h13.2"/><path d="M12 19.4V9"/><path d="M7.6 13.2 12 8.8l4.4 4.4"/></svg>
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <p class="foot-note">不着急，想起来再回来。</p>
+</main>
+
+<nav class="tabbar" aria-label="主导航">
+  <a class="tab" href="home.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 6.6h11M9.2 12h11M9.2 17.4h7"/><path d="M3.7 6.3l1.5 1.6 2.1-2.5M3.7 11.7l1.5 1.6 2.1-2.5"/><circle cx="5" cy="17.3" r="1.5"/></svg>
+    今天
+  </a>
+  <a class="tab is-active" href="later.html" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 4.4h10.8a.9.9 0 0 1 .9.9v14.3l-6.3-4.2-6.3 4.2V5.3a.9.9 0 0 1 .9-.9Z"/></svg>
+    以后
+  </a>
+  <a class="tab" href="stats.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 20.2h16.8"/><path d="M7.2 20V13M12 20V8.4M16.8 20v-4.6"/></svg>
+    回顾
+  </a>
+  <a class="tab tab-add" href="add.html">
+    <span class="add-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5.6v12.8M5.6 12h12.8"/></svg></span>
+    新建
+  </a>
+</nav>
+
+</body>
+</html>

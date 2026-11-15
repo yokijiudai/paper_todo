@@ -184,6 +184,25 @@ button {
 .todo-time { font-variant-numeric: tabular-nums; }
 .todo-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--color-line); }
 
+/* ---------- 分组标题：小字 + 一条细线拉到右边 ---------- */
+.group { margin-top: var(--space-5); }
+.group-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+}
+.group-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-line);
+}
+
 /* ---------- 标签 ---------- */
 .chip {
   display: inline-flex;
@@ -253,7 +272,7 @@ button {
   height: var(--tabbar-h);
   padding: 4px var(--space-4) var(--safe-b);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   background: var(--color-surface);
   border-top: 1px solid var(--color-line);
